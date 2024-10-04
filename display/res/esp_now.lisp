@@ -118,7 +118,7 @@
          (gpio-hold-deepsleep 1)
          (print pairing_status)
          (if (= menu_index 0){
-             (sleep-light sleep_time)   ;turn off the radio(wifi,bt), enter in light sleep mode.
+            ; (sleep-light sleep_time)   ;turn off the radio(wifi,bt), enter in light sleep mode.
          })
      })
      (if (> counter_1 val_1) {

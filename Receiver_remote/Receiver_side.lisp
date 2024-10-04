@@ -410,7 +410,7 @@
          (setq is_data_received 0.0)
          }
          {(print "No data")
-          (pwm-set-duty 0.49 0) ; set the duty cycle to 50% just to ensure when data is lost the motor stops
+          ;; (pwm-set-duty 0.49 0) ; set the duty cycle to 50% just to ensure when data is lost the motor stops
          })
         (free data_send)
         ; (sleep (+ data_rate 0.2)) ; 0.237  ; for data rate=30ms (50ms(on)+50ms(off)+datarate)=130ms

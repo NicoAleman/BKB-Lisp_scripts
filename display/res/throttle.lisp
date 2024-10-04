@@ -35,7 +35,7 @@
         )
 
         (if(<= throttle_time_out 0){
-            (setq throttle_status 0) ; disable
+            (setq throttle_status 1) ; *EDIT - CHANGED TO NO TIME OUT (0 -> 1)*
         }
         {
             (setq throttle_status 1) ; enable

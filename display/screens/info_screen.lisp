@@ -185,7 +185,7 @@
             })
 
             (if(< (get-adc 1) 0.2) {
-                (setq ppm_menu_stat 0.0)
+                (setq ppm_menu_stat 1.0) ; *EDIT - Changed 0.0 -> 1.0 to access PPM Menu*
                 (setq iteration_data 0.0)
                 (sleep 1)
             })
