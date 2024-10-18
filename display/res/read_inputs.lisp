@@ -14,7 +14,7 @@
 (define button_time_long 2.0) 
 @const-start
 (defun get-adc-raw() {
-   (* (get-adc 0) 1241.21 )
+   (* (get-adc 0) 1422 )
 })
 
 (defun read_on(){
