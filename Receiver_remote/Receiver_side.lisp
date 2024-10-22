@@ -285,7 +285,6 @@
     (event-enable 'event-esp-now-rx)
 
     (ppm-start 50 throttle_ppm 0 21 13)
-    (set-motor-torque)
     (param-motor)
     (loop-state)
   }
@@ -370,47 +369,64 @@
     (setq mac_5 (to-i (eeprom-read-i 5)))
 })
 
+(define set_torq_prescaler 0)
 (defun set-motor-torque() {
 
-    (loopwhile-thd 50 t {
+    (setq set_torq_prescaler (+ set_torq_prescaler 1))
 
-
-     (if (and (= torq_mode 0.0) (= flag_l 0)) {
-   ;  (rcode-run-noret can-id  '(conf-set 'l-current-max-scale 0.25)) ; 0.15
-      (can-cmd can-id (str-from-n 0.25 "(conf-set 'l-current-max-scale %.2f)"))
-      (setq flag_l 1) (setq flag_s 0)
-      }
-     )
-     (if (and (= torq_mode 1.0) (= flag_m 0)) {
-     ;(rcode-run-noret can-id '(conf-set 'l-current-max-scale 0.50)) ; 0.18
-     (can-cmd can-id (str-from-n 0.50 "(conf-set 'l-current-max-scale %.2f)")) ; for Version 6.00
-     (setq flag_m 1) (setq flag_l 0)
-       }
-      )
-     (if (and (= torq_mode 2.0) (= flag_h 0)) {
-    ; (rcode-run-noret can-id '(conf-set 'l-current-max-scale 0.75)) ; 0.22
-      (can-cmd can-id (str-from-n 0.75 "(conf-set 'l-current-max-scale %.2f)")) ; for Version 6.00
-      (setq flag_h 1) (setq flag_m 0)
-       }
-      )
-     (if (and (= torq_mode 3.0) (= flag_s 0)) {
-     ;(rcode-run-noret can-id '(conf-set 'l-current-max-scale 1.0)) ; 0.35
-     (can-cmd can-id (str-from-n 1.0 "(conf-set 'l-current-max-scale %.2f)")) ; for Version 6.00
-     (setq flag_s 1) (setq flag_h 0)
-      }
-      )
-
-   (sleep 1.0)
-    }
-   )
-  }
- )
+    (if (= set_torq_prescaler 10){
+        (setq set_torq_prescaler 0)
+        (cond
+            ((eq torq_mode 0){
+                (if (= flag_l 0){ ; avoid re entry
+                    ;(rcode-run-noret can-id  '(conf-set 'l-current-max-scale 0.25))
+                    (can-cmd can-id (str-from-n 0.25 "(conf-set 'l-current-max-scale %.2f)"))
+                    (setq flag_l 1)
+                    (setq flag_m 0)
+                    (setq flag_h 0)
+                    (setq flag_s 0)
+                })
+            })
+            ((eq torq_mode 1){
+                (if (= flag_m 0){ ; avoid re entry
+                    ;(rcode-run-noret can-id '(conf-set 'l-current-max-scale 0.50))
+                    (can-cmd can-id (str-from-n 0.50 "(conf-set 'l-current-max-scale %.2f)")) ; for Version 6.00
+                    (setq flag_l 0)
+                    (setq flag_m 1)
+                    (setq flag_h 0)
+                    (setq flag_s 0)
+                })
+            })
+            ((eq torq_mode 2){
+                (if (= flag_h 0){ ; avoid re entry
+                    ;(rcode-run-noret can-id '(conf-set 'l-current-max-scale 0.75))
+                    (can-cmd can-id (str-from-n 0.75 "(conf-set 'l-current-max-scale %.2f)")) ; for Version 6.00
+                    (setq flag_l 0)
+                    (setq flag_m 0)
+                    (setq flag_h 1)
+                    (setq flag_s 0)
+                })
+            })
+            ((eq torq_mode 3){
+                (if (= flag_s 0){ ; avoid re entry
+                    ;(rcode-run-noret can-id '(conf-set 'l-current-max-scale 1.0))
+                    (can-cmd can-id (str-from-n 1.0 "(conf-set 'l-current-max-scale %.2f)")) ; for Version 6.00
+                    (setq flag_l 0)
+                    (setq flag_m 0)
+                    (setq flag_h 0)
+                    (setq flag_s 1)
+                })
+            })
+         )
+     })
+ })
 
 (defun loop-state () {
     (loopwhile-thd 50 t {
         (var data_send (bufcreate 55))
         (if (= is_data_received 1.0) {
             (data_to_send data_send)
+            (set-motor-torque)
             (setq is_data_received 0.0)
          }
         {;else
