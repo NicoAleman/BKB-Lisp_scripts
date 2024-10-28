@@ -115,7 +115,7 @@
         })
 
         ; change direction
-        (if (> main_prescaler 5){
+        (if (> main_prescaler 8){
             (if (and (= cfg_pressed_short 1) (< (get-adc-raw) (+ (eeprom-read-i min_cal_add) 80))){
                 (if(= direction 1)
                     (setq direction 0)
@@ -132,7 +132,7 @@
             })
         })
 
-        (if (> main_prescaler 10)
+        (if (> main_prescaler 8)
             (setq main_prescaler 0)
         )
 
