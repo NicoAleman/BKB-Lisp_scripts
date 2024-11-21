@@ -2,7 +2,10 @@
 ;it is necessary to install the code-server. code-server allows the execution of
 ;other functionalities that are not implemented in 6.00 version.
 (sleep 10)
-(def FW_VERSION 6.05)
+(def FW_VERSION 6.02)
+
+(import "UART_protocol/uart_protocol.lisp" 'uart_protocol)
+(read-eval-program uart_protocol)
 
 (if (>= FW_VERSION 6.05){
 (import "pkg@://vesc_packages/lib_code_server/code_server.vescpkg" 'code-server)
@@ -39,7 +42,7 @@
 (def poles           14.0)
 (def pulley          2.66)
 (def wheel_diam      0.105)
-(def batt_type       0.0)
+(def batt_type       3.0)
 (def rec_fw_may      0.0)
 (def rec_fw_min      0.0)
 (def rec_lisp_may    0.0)
@@ -86,6 +89,11 @@
 (def last_package_received 0.0)
 (to-u64 last_package_received)
 (def PPM_timeout 0.3) ; [sec] time out for PPM received
+
+(def is_uart_enable    1) ; this flag will be set in the remote to enable or disable the UART comm
+(def is_uart_start     0)
+(def is_ppm_start      0)
+
 ;TODO: List all can devices and check if the listed ID's belong to an ESC controller.
 ;it can be done through FW version, HW or so.
 ;define a master ESC in case a dual controller is connected.
@@ -124,8 +132,6 @@
 (defunret scan-can-device (can-id) { ;
     (if (< can-id 0) {
         (var can-devices (can-scan))
-        ;(print can-devices)
-        ;(setq can-id (first (can-scan)))
         (setq can-id (first (can-scan)))
     })
 
@@ -142,24 +148,29 @@
      (setq torq_mode    (bufget-i8  data 5)) ; torque mode
      (setq pairing_key  (bufget-i8  data 6)) ; get the pairing key 67
      (setq ppm_status   (bufget-i8  data 7)) ; get the ppm mode.
-     ;(setq data_rate    (bufget-f32 data 8)) ; data_rate from remote to sync to the receiver
-     ;(print throttle)
-     ;(print ppm_status)
+    ;(setq data_rate    (bufget-f32 data 8)) ; data_rate from remote to sync to the receiver
 
      (setq throttle_ppm (utils_map throttle -1.0 1.0 0.0 1.0))
-     ;(print throttle_ppm)
      (utils_truncate throttle_ppm 0.1 0.97) ; truncate the values for the throttle ppm
      (setq throttle_dead_band (dead_band throttle 0.2 1.0))
-     ;(print throttle_dead_band)
 
-     (if (eq ppm_status 1) {
+(if (eq is_uart_enable 0) {
+    (setq is_uart_start 0)
+    (if (eq ppm_status 1) {
+        (if (= is_ppm_start 0) {
+            (uart-stop)
+            (ppm-start 50 throttle_ppm 0 21 13)
+            (print "ppm enable")
+            (setq is_ppm_start 1)
+         })
         (pwm-set-duty throttle_ppm 0);
         (setq no_app_config 0.0)
-     }
-     {
+    }
+    {
+    (setq is_ppm_start 0)
     (if (eq no_app_config 0.0) {(can-cmd can-id "(conf-set 'app-to-use 0)")(setq no_app_config 1.0)})
 
-     (if (>= FW_VERSION 6.05) {
+    (if (>= FW_VERSION 6.05) {
         (rcode-run-noret can-id (list 'set-remote-state throttle 0 0 0  direction)) ; to use with FW 6.05+
     }
     {
@@ -171,31 +182,56 @@
         (if (and (< throttle_dead_band 0.2)(> throttle_dead_band -0.2))
             {(canset-current-rel can-id 0.0)})}
         )
-    (if(< throttle_dead_band -0.2) {
-       (canset-brake-rel can-id throttle_dead_band)
+        (if(< throttle_dead_band -0.2) {
+           (canset-brake-rel can-id throttle_dead_band)
       })
     })
-   })
+   })}
+ ;else
+  {; ADD uart commands here, just to test
+    (if (= is_uart_start 0) {
+        (pwm-stop 0)
+        (uart-init)
+        (print "Uart started")
+        (setq is_uart_start 1)
+    })
+
+    (if (< throttle 0.02)(setq COMM_SET_CURRENT 7)(setq COMM_SET_CURRENT 6))
+    (if(= direction 1)(setq direction 1)(setq direction -1))
+       (uart-send)
+   }
+  )
  (free data)
-  }
+ }
 )
 
 ;Parameters from ESC to be shown in the remote
 
 (defun data_to_send (data_send) {
 
-
+  (if (= is_uart_enable 0) {
+      (print "No uart enable")
       (setq rpm     (canget-rpm can-id))
       (setq vin     (canget-vin can-id))
       (setq temp    (canget-temp-fet can-id))
       (setq speed   (canget-speed can-id))
       (setq I_motor (canget-current can-id))
 
+      (bufset-f32 data_send 0 (+ rpm 0.01)); from CAN
+      (bufset-f32 data_send 4  vin); from CAN
+      (bufset-f32 data_send 12 I_motor) ; from CAN
+      (bufset-f32 data_send 32 distance); from CAN
+     }
+     {
+      (bufset-f32 data_send 0  (to-float erpm_l));erpm from UART
+      (bufset-f32 data_send 4  (/ (to-float voltage) 10.0)); from UART
+      (bufset-f32 data_send 12 (/ (to-float current) 100)); from UART
+      (bufset-f32 data_send 32 (/ (to-float distance-uart) 1000)); from UART
+     }
 
-      (bufset-f32 data_send 0 (+ rpm 0.01))
-      (bufset-f32 data_send 4  vin)
+     )
+
       (bufset-f32 data_send 8  temp)
-      (bufset-f32 data_send 12 I_motor)
       (bufset-i8  data_send 16 poles)
       (bufset-f32 data_send 17 pulley)
       (bufset-f32 data_send 21 wheel_diam)
@@ -206,14 +242,10 @@
       (bufset-i8  data_send 29 rec_lisp_min)
       (bufset-i8  data_send 30 skate_fw_may)
       (bufset-i8  data_send 31 skate_fw_min)
-      (bufset-f32 data_send 32 distance)
-      (bufset-i8 data_send 36 127); sends 127 as pairing key
-      (bufset-i8 data_send 37 pairing_status) ; send connection status
+      (bufset-i8  data_send 36 127); sends 127 as pairing key
+      (bufset-i8  data_send 37 pairing_status) ; send connection status
 
     (if (= pairing_key 64) { ;64
-   ;   (bufset-i8 data_send 36 127); sends 127 as pairing key
-   ;   (bufset-i8 data_send 37 pairing_status) ; send connection status
-     ; (print data_send)
       (esp-now-send mac-tx data_send)
      }
     )
@@ -284,7 +316,7 @@
     (event-register-handler (spawn event-handler))
     (event-enable 'event-esp-now-rx)
 
-    (ppm-start 50 throttle_ppm 0 21 13)
+   ;(ppm-start 50 throttle_ppm 0 21 13)
     (param-motor)
     (loop-state)
   }
@@ -342,7 +374,6 @@
             )
          }
        )
-
      (sleep 1.0)
     }
    )
@@ -356,7 +387,6 @@
     (eeprom-store-i 3 255)
     (eeprom-store-i 4 255)
     (eeprom-store-i 5 255)
-    ; (eeprom-store-i 6 1) ; indicates that it is paired
    }
 )
 
@@ -436,10 +466,10 @@
             })
         })
         (free data_send)
-        ; (sleep (+ data_rate 0.2)) ; 0.237  ; for data rate=30ms (50ms(on)+50ms(off)+datarate)=130ms
-        (sleep 0.1)
-       }                                     ; for data rate=60ms (50ms(on)+50ms(off)+datarate)=160ms
-     )                         ;for data rate=100ms (50ms(on)+50ms(off)+datarate)=200ms
+       ; (print (*(/ (to-float speed-uart) 1000) 2.23694))
+        (sleep 0.02)
+       }
+     )
   }
 )
 
