@@ -2,7 +2,7 @@
 (def firts_iteration 0)
 (def enter_menu 0)
 (def thum_stick_prescaler 0)
-(define menu_count 6)
+(define menu_count 7)
 
 @const-start
 (defun config_screen(){
@@ -142,6 +142,40 @@
              }
              {
              (PPM_screen)
+             })
+          ))
+         ((eq menu_sub_index 7)
+         (progn
+            (if(= enter_menu 0){
+                (txt-block-c title_box 1 64 0  font_20x30 "UART")
+                (disp-render title_box (+ x_offset 0) (+ y_offset 15) '(0 0xFFFFFF))
+                (img-clear title_box)
+                (if (= cfg_pressed_short 1){
+                    (setq cfg_pressed_short 0)
+                    (setq cfg_pressed_long 0)
+                    (disp-clear)
+                    (setq enter_menu 1)
+                 })
+             }
+             {
+             (UART_screen)
+             })
+          ))
+         ((eq menu_sub_index 8)
+         (progn
+            (if(= enter_menu 0){
+                (txt-block-c title_box 1 64 0  font_20x30 "CAN")
+                (disp-render title_box (+ x_offset 0) (+ y_offset 15) '(0 0xFFFFFF))
+                (img-clear title_box)
+                (if (= cfg_pressed_short 1){
+                    (setq cfg_pressed_short 0)
+                    (setq cfg_pressed_long 0)
+                    (disp-clear)
+                    (setq enter_menu 1)
+                 })
+             }
+             {
+             (CANBUS_screen)
              })
           ))
     )

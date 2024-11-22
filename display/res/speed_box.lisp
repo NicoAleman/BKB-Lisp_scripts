@@ -1,4 +1,4 @@
-; Write speed with unit 20x30 font 
+; Write speed with unit 20x30 font
 ; speed  -> speed in mph or kph in float
 ; m_k    -> 0 = miles per houtr, 1 = kph
 ; px py  -> position in pixels
@@ -6,8 +6,8 @@
 (def speed_val 0.0)
 @const-start
 (defun speed_cal(){
-    (if (and (not-eq poles 0) (not-eq pulley 0))
-        (setq speed_val (*(* (/ (/ (abs rpm) poles) pulley) wheel_diam 0.18845)))
+    (if (and (not-eq poles_config 0) (not-eq pulley_config 0))
+        (setq speed_val (*(* (/ (/ (abs rpm) poles_config) pulley_config) wheel_diam_config 0.18845)))
         (setq speed_val 0.0)
     )
 
@@ -22,8 +22,8 @@
     (disp-render speed_box px py '(0x00000 0xFFFFFF 0x00FF00 0xFF0000))
     (def unit_box (img-buffer 'indexed2 27 17))
     (if (= m_k 0)
-            (txt-block-l unit_box 1 0 0 font_9x14 "mph")  
-            (txt-block-l unit_box 1 0 0 font_9x14 "kph")  
+            (txt-block-l unit_box 1 0 0 font_9x14 "mph")
+            (txt-block-l unit_box 1 0 0 font_9x14 "kph")
     )
     (disp-render unit_box (+ px 63) (+ py 15) '(0x00000 0xFFFFFF))
 

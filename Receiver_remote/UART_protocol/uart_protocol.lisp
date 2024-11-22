@@ -124,7 +124,7 @@
             (setq is-data-send 0)
             (bufclear uart-buf);to avoid locked values when the UART connection is lost
         })
-        (sleep 0.05)
+        (sleep 0.01)
 }))
 
 (spawn 150 read-thd) ; Run reader in its own thread

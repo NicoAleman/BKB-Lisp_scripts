@@ -75,7 +75,7 @@
     (setq distance        (bufget-f32  data 32))
     (setq pairing_key_R    (bufget-i8  data 36))
     (setq pairing_status   (bufget-i8  data 37))
-
+    (print pulley)
     (free data)
 })
 
@@ -109,20 +109,20 @@
      (bufset-i8 data_send 5 torq_mode     ); torque mode
      (bufset-i8 data_send 6 pairing_key_T)
      (bufset-i8 data_send 7 ppm_status); send the ppm status
-    ; (bufset-i8 data_send 8 data_rate); send the sleep info, a timing that will be used to sync the receiver.
+     (bufset-i8 data_send 8 uart_status); send the uart status
 
 
     (if (= batt_saver 1){
         (if (= menu_index 0){
             (gpio-hold 20 1) ; latch the gpio_pin_20 before enter in light sleep mode
             (gpio-hold-deepsleep 1)
-            (sleep-light sleep_time)   ;turn off the radio(wifi,bt), enter in light sleep mode.                 
+            (sleep-light sleep_time)   ;turn off the radio(wifi,bt), enter in light sleep mode.
             (sleep 0.01)
             (wifi-start)
             (gpio-hold 20 0)
             (gpio-hold-deepsleep 0)
 
-         })            
+         })
      }
      {
         (sleep 0.01)

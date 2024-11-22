@@ -11,8 +11,13 @@
 (define pair4_add 10)
 (define pair5_add 11)
 (define data_index 12)
-(define ppm_status_add 13)
-(define batt_saver_add 14)
+(define ppm_status_add  13)
+(define batt_saver_add  14)
+(define uart_status_add 15)
+(define poles_add       16)
+(define wheel_diam_add  17)
+(define pulley_add      18)
+(define batt_type_add   19)
 
 (defun eeprom_check(){
     (setq test_value (to-i (eeprom-read-i 1)))
@@ -80,6 +85,31 @@
         (print "eeprom 14 error, writing default")
         (eeprom-store-i 14 0)
     })
+    (setq test_value (to-i (eeprom-read-i 15)))
+    (if(or (< test_value 0)(> test_value 1)){
+        (print "eeprom 15 error, writing default")
+        (eeprom-store-i 15 0)
+    })
+    (setq test_value (to-i (eeprom-read-i 16)))
+    (if(or (< test_value 2)(> test_value 50)){
+        (print "eeprom 15 error, writing default")
+        (eeprom-store-i 16 14)
+    })
+    (setq test_value (to-i (eeprom-read-f 17)))
+    (if(or (< test_value 0.0)(> test_value 0.8)){
+        (print "eeprom 17 error, writing default")
+        (eeprom-store-f 17 0.083)
+    })
+    (setq test_value (to-i (eeprom-read-f 18)))
+    (if(or (< test_value 0.1)(> test_value 100.0)){
+        (print "eeprom 18 error, writing default")
+        (eeprom-store-f 18 3.0)
+    })
+    (setq test_value (to-i (eeprom-read-i 19)))
+    (if(or (< test_value 1)(> test_value 100)){
+        (print "eeprom 19 error, writing default")
+        (eeprom-store-i 19 3)
+    })
 })
 
 (defun eeprom_init(){
@@ -102,10 +132,10 @@
             (eeprom-store-i 13 0) ; ppm status
             (eeprom-store-i 14 0)
             (eeprom-store-i 15 0)
-            (eeprom-store-i 16 0)
-            (eeprom-store-i 17 0)
-            (eeprom-store-i 18 0)
-            (eeprom-store-i 19 0)
+            (eeprom-store-i 16 14)
+            (eeprom-store-i 17 0.083)
+            (eeprom-store-i 18 3.0)
+            (eeprom-store-i 19 3)
             (eeprom-store-i 20 0)
             (eeprom-store-i 21 0)
             (eeprom-store-i 22 0)

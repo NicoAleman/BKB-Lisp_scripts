@@ -44,6 +44,8 @@
 (import "screens/pairing_screen.lisp" 'pairing_screen)
 (import "screens/batt_save_screen.lisp" 'battery_saver_screen)
 (import "screens/PPM_screen.lisp" 'ppm_screen)
+(import "screens/UART_screen.lisp" 'uart_screen)
+(import "screens/CANBUS_screen.lisp" 'canbus_screen)
 (read-eval-program disp-text)
 (read-eval-program speed_box)
 (read-eval-program display_init)
@@ -67,7 +69,8 @@
 (read-eval-program pairing_screen)
 (read-eval-program battery_saver_screen)
 (read-eval-program ppm_screen)
-
+(read-eval-program uart_screen)
+(read-eval-program canbus_screen)
 ; display initialization
 (display_init)
 
@@ -93,7 +96,14 @@
 (setq torq_mode (to-i(eeprom-read-i torq_mode_add)))
 (setq data_rate (to-float(eeprom-read-f data_index))) ; load default data rate value
 (setq ppm_status (to-i(eeprom-read-i ppm_status_add))); load default ppm state value
+(setq uart_status (to-i (eeprom-read-i uart_status_add))); load default uart state value
 (setq batt_saver (to-i(eeprom-read-i batt_saver_add))); load defaul battery saver config
+(setq poles_config (to-i (eeprom-read-i poles_add))) ; load default poles value
+(setq wheel_diam_config (to-float (eeprom-read-f wheel_diam_add))) ; load default wheel diammeter
+(setq pulley_config (to-float (eeprom-read-f pulley_add))) ; load default pulley value
+(setq batt_type_config (to-i (eeprom-read-i batt_type_add))) ; load default batt_type
+
+
 (esp_now_init)
 ; display thread
 (defun display_th(){
