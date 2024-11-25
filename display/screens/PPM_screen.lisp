@@ -41,7 +41,7 @@
         (disp-render text_box (+ x_offset 0) (+ y_offset 18) '(0 0xFFFFFF))
         (img-clear text_box)
         (setq ppm_status 1)
-        (setq uart_status 0) ; disable uart if ppm is enabled
+        (setq uart_status 0)
     })
     (if (< (get-adc-raw) 1000){
         ;(sleep 0.1)
@@ -49,7 +49,6 @@
         (disp-render text_box (+ x_offset 0) (+ y_offset 18) '(0 0xFFFFFF))
         (img-clear text_box)
         (setq ppm_status 0)
-        (setq uart_status 0)
     })
 
     (if (= cfg_pressed_long 1){

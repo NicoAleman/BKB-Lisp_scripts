@@ -75,7 +75,6 @@
     (setq distance        (bufget-f32  data 32))
     (setq pairing_key_R    (bufget-i8  data 36))
     (setq pairing_status   (bufget-i8  data 37))
-    (print pulley)
     (free data)
 })
 
@@ -110,7 +109,6 @@
      (bufset-i8 data_send 6 pairing_key_T)
      (bufset-i8 data_send 7 ppm_status); send the ppm status
      (bufset-i8 data_send 8 uart_status); send the uart status
-
 
     (if (= batt_saver 1){
         (if (= menu_index 0){

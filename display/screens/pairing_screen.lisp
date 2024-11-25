@@ -64,9 +64,11 @@
         (disp-render text_box (+ x_offset 1) (+ y_offset 1) '(0 0xFFFFFF))
         (img-clear text_box)
 
-        (var pairing_buff (bufcreate 8))
+        (var pairing_buff (bufcreate 9))
         (bufset-f32 pairing_buff 0 0.00001); for some reason when the first element of the buffer is 0, the rest is filled with 0
         (bufset-i8 pairing_buff 6 64)
+        (bufset-i8 pairing_buff 7 ppm_status) ; add ppm and uart status to avoid missing data information about the communication
+        (bufset-i8 pairing_buff 8 uart_status);
         (esp-now-send peer pairing_buff)
         (free pairing_buff)
 

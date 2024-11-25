@@ -44,12 +44,12 @@
 
             (if (> (get-adc-raw) 3000){
                 (sleep 0.1)
-                (setq poles_config (+ poles_config 1))
+                (setq poles_config (+ poles_config 2))
                 (img-clear numb_box)
              })
-            (if (< (get-adc-raw) 1000){
+            (if (and (< (get-adc-raw) 1000)(> poles_config 2)){
                 (sleep 0.1)
-                (setq poles_config (- poles_config 1))
+                (setq poles_config (- poles_config 2))
                 (img-clear numb_box)
             })
         ))
@@ -71,7 +71,7 @@
                 (setq wheel_diam_config (+ wheel_diam_config 0.001))
                 (img-clear numb_box)
              })
-            (if (< (get-adc-raw) 1000){
+            (if (and (< (get-adc-raw) 1000)(>= wheel_diam_config 0.001)){
                 (sleep 0.1)
                 (setq wheel_diam_config (- wheel_diam_config 0.001))
                 (img-clear numb_box)
@@ -94,7 +94,7 @@
                 (setq pulley_config (+ pulley_config 0.1))
                 (img-clear numb_box)
              })
-            (if (< (get-adc-raw) 1000){
+            (if (and (< (get-adc-raw) 1000)( > pulley_config 0.1)){
                 (sleep 0.1)
                 (setq pulley_config (- pulley_config 0.1))
                 (img-clear numb_box)
@@ -117,7 +117,7 @@
                 (setq batt_type_config (+ batt_type_config 1))
                 (img-clear numb_box)
              })
-            (if (< (get-adc-raw) 1000){
+            (if (and (< (get-adc-raw) 1000)(> batt_type_config 1)){
                 (sleep 0.1)
                 (setq batt_type_config (- batt_type_config 1))
                 (img-clear numb_box)
@@ -127,9 +127,10 @@
         (if (= firts_iteration_motor_config 0) {
             (disp-clear)
             (def text_box (img-buffer 'indexed2 127 14))
-            (txt-block-l text_box 1 0 0  font_9x14 "Store config")
-            (disp-render text_box (+ x_offset 1) (+ y_offset 0) '(0 0xFFFFFF))
+            (txt-block-l text_box 1 0 0  font_9x14 " SAVE config?")
+            (disp-render text_box (+ x_offset 1) (+ y_offset 10) '(0 0xFFFFFF))
             (img-clear text_box)
+             (txt-block-l text_box 1 0 0  font_9x14 "Hold SAVE 2sec")
             (disp-render text_box (+ x_offset 1) (+ y_offset 35) '(0 0xFFFFFF))
             (img-clear text_box)
             (def text_box (img-buffer 'indexed2 36 14))
@@ -140,12 +141,6 @@
             (disp-render text_box (+ x_offset 90) (+ y_offset 49) '(0 0xFFFFFF))
             (img-clear text_box)
             })
-            (txt-block-c numb_box 1 60 0  font_20x30 "SAVE?");
-            (disp-render numb_box (+ x_offset 4) (+ y_offset 17) '(0 0xFFFFFF))
-            (img-clear numb_box)
-
-            (img-clear text_box_2)
-            (disp-render text_box_2 (+ x_offset 47) (+ y_offset 44) '(0 0xFFFFFF))
             (setq firts_iteration_motor_config 1)
         ))
     )

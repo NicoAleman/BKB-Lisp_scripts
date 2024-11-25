@@ -86,7 +86,6 @@
     }
 )
 
-
 (defun load-buffer() {
 
         (setq temp-fet           (bufget-i16    uart-buf 3))  ; Temp FET
@@ -124,7 +123,7 @@
             (setq is-data-send 0)
             (bufclear uart-buf);to avoid locked values when the UART connection is lost
         })
-        (sleep 0.01)
+        (sleep 0.05)
 }))
 
 (spawn 150 read-thd) ; Run reader in its own thread

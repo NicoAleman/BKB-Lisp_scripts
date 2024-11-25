@@ -49,7 +49,6 @@
         (disp-render text_box (+ x_offset 0) (+ y_offset 18) '(0 0xFFFFFF))
         (img-clear text_box)
         (setq uart_status 0)
-        (setq ppm_status 0)
     })
 
     (if (= cfg_pressed_long 1){

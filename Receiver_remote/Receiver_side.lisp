@@ -2,7 +2,7 @@
 ;it is necessary to install the code-server. code-server allows the execution of
 ;other functionalities that are not implemented in 6.00 version.
 (sleep 10)
-(def FW_VERSION 6.05)
+(def FW_VERSION 6.02)
 
 (import "UART_protocol/uart_protocol.lisp" 'uart_protocol)
 (read-eval-program uart_protocol)
@@ -149,8 +149,6 @@
      (setq pairing_key  (bufget-i8  data 6)) ; get the pairing key 67
      (setq ppm_status   (bufget-i8  data 7)) ; get the ppm mode.
      (setq uart_status  (bufget-i8  data 8)) ; get the uart mode.
-     (print uart_status)
-     (print ppm_status)
      (setq throttle_ppm (utils_map throttle -1.0 1.0 0.0 1.0))
      (utils_truncate throttle_ppm 0.1 0.97) ; truncate the values for the throttle ppm
      (setq throttle_dead_band (dead_band throttle 0.2 1.0))
@@ -261,7 +259,8 @@
         (print "broadcasting")
     })
     (setq signal_level rssi)
-    (setq pairing_key    (bufget-i8  data 6))
+    (setq pairing_key  (bufget-i8 data 6))
+
     (if (eq src mac-tx) {
         ;(print (list "src:" src  "des:" des "data:" data "rssi:" rssi))
         (setq is_data_received 1.0); to ensure when a data is received the ESP start sending
@@ -468,7 +467,7 @@
         })
         (free data_send)
        ; (print (*(/ (to-float speed-uart) 1000) 2.23694))
-        (sleep 0.05)
+        (sleep 0.02)
        }
      )
   }
