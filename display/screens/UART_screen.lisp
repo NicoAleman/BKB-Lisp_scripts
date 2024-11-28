@@ -56,7 +56,7 @@
        (setq cfg_pressed_short 0)
        (eeprom-store-i uart_status_add uart_status)
        (eeprom-store-i ppm_status_add ppm_status)
-       (setq uart_status (to-i (eeprom-read-i uart_status_add)))
+       ;(setq uart_status (to-i (eeprom-read-i uart_status_add)))
        (disp-clear)
        (setq firts_iteration 0)
        (setq menu_sub_index 0)

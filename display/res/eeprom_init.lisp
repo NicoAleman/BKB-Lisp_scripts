@@ -18,6 +18,7 @@
 (define wheel_diam_add  17)
 (define pulley_add      18)
 (define batt_type_add   19)
+(define safety_status_add 20)
 
 (defun eeprom_check(){
     (setq test_value (to-i (eeprom-read-i 1)))
@@ -110,6 +111,11 @@
         (print "eeprom 19 error, writing default")
         (eeprom-store-i 19 3)
     })
+    (setq test_value (to-i (eeprom-read-i 20)))
+    (if(or (< test_value 0)(> test_value 1)){
+        (print "eeprom 20 error, writing default")
+        (eeprom-store-i 20 1)
+    })
 })
 
 (defun eeprom_init(){
@@ -136,7 +142,7 @@
             (eeprom-store-i 17 0.083)
             (eeprom-store-i 18 3.0)
             (eeprom-store-i 19 3)
-            (eeprom-store-i 20 0)
+            (eeprom-store-i 20 1)
             (eeprom-store-i 21 0)
             (eeprom-store-i 22 0)
             (eeprom-store-i 23 0)

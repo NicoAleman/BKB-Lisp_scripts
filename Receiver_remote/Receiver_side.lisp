@@ -1,8 +1,8 @@
 ;Script adapted for FW versions starting from 6.00. For FW version 6.0.5 or higher
 ;it is necessary to install the code-server. code-server allows the execution of
 ;other functionalities that are not implemented in 6.00 version.
-(sleep 1)
-(def FW_VERSION 6.05)
+(sleep 10)
+(def FW_VERSION 6.02)
 
 (import "UART_protocol/uart_protocol.lisp" 'uart_protocol)
 (read-eval-program uart_protocol)
@@ -316,7 +316,8 @@
 
 (defun main () {
     (print "Self mac" (get-mac-addr))
-    (if (= (eeprom-read-i 6) 0) {
+    (setq uart_status (to-i(eeprom-read-i 6)))
+    (if (= uart_status 0) {
         (setq can-id (scan-can-device can-id)) ; when ppm is enabled just use
         (print "Can device:" can-id)
         (print "Listening...")}

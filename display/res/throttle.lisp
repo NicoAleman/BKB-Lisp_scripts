@@ -35,7 +35,7 @@
         )
 
         (if(<= throttle_time_out 0){
-            (setq throttle_status 0) ; disable
+            (setq throttle_status safety_status) ; disable
         }
         {
             (setq throttle_status 1) ; enable

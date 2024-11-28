@@ -46,6 +46,7 @@
 (import "screens/PPM_screen.lisp" 'ppm_screen)
 (import "screens/UART_screen.lisp" 'uart_screen)
 (import "screens/CANBUS_screen.lisp" 'canbus_screen)
+(import "screens/safe_throttle_screen.lisp" 'safe_throttle_screen)
 (read-eval-program disp-text)
 (read-eval-program speed_box)
 (read-eval-program display_init)
@@ -71,6 +72,7 @@
 (read-eval-program ppm_screen)
 (read-eval-program uart_screen)
 (read-eval-program canbus_screen)
+(read-eval-program safe_throttle_screen)
 ; display initialization
 (display_init)
 
@@ -102,7 +104,7 @@
 (setq wheel_diam_config (to-float (eeprom-read-f wheel_diam_add))) ; load default wheel diammeter
 (setq pulley_config (to-float (eeprom-read-f pulley_add))) ; load default pulley value
 (setq batt_type_config (to-i (eeprom-read-i batt_type_add))) ; load default batt_type
-
+(setq safety_status (to-i (eeprom-read-i safety_status_add))) ; load the safety status for throttle
 
 (esp_now_init)
 ; display thread
