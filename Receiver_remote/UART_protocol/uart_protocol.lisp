@@ -38,6 +38,7 @@
 (def num-vescs)
 (def wh-batt-left)
 (def odometer)
+(def throttle_range)
 
 (def is-data-send 0)
 
@@ -70,12 +71,12 @@
 )
 
 (defun uart-send () {
-
+        (setq throttle_range (* throttle_dead_band throttle_scale))
         (bufset-i8  buffer 0 2) ; start byte
         (bufset-i8  buffer 1 5) ; payload length
         (bufset-i8  buffer 2 COMM_SET_CURRENT) ; command id, 0x06 for COMM_SET_CURRENT
-        (bufset-i32 buffer 3 (*(*(* throttle_dead_band 10000) direction) 1)) ; Data current in mA
-
+        (bufset-i32 buffer 3 (*(* throttle_range  10000) direction)) ; Data current in mA
+        (print throttle_range)
         (bufset-i8  checksum  0 (bufget-i8 buffer 2))
         (bufset-i32 checksum  1 (bufget-i32 buffer 3))
 

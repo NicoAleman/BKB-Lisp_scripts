@@ -79,11 +79,13 @@
 (def signal_level   0)
 (def throttle_ppm 0.0)
 (def throttle_dead_band 0.0)
+(def throttle_scale 0)
 (def dead 0.0)
 (def ppm_input 0.0)
 (def ppm_status 0.0)
 (def ppm_config 0.0)
 (def uart_status 0)
+(def uart_status_init 0)
 (def no_app_config 0.0)
 (def can_enabled 0)
 (def start_time 0)
@@ -160,6 +162,7 @@
             (print "Uart started")
             (setq is_uart_start 1)
             (eeprom-store-i 6 uart_status) ; store uart status to be used when the receiver starts
+            (setq uart_status_init (to-i(eeprom-read-i 6)))
          })
         (if (< throttle 0.02)(setq COMM_SET_CURRENT 7)(setq COMM_SET_CURRENT 6))
         (if(= direction 1)(setq direction 1)(setq direction -1))
@@ -184,19 +187,21 @@
        (setq is_uart_start 0)
        (eeprom-store-i 6 uart_status)
        (eeprom-store-i 7 ppm_status)
+       (setq uart_status_init (to-i(eeprom-read-i 6)))
 
         (if (eq no_app_config 0.0) {
             (print "CAN-BUS started")
+            (setq can-id (to-i (eeprom-read-i 8))) ; load CAN-BUS id to avoid error when switch from UART to CAN after a power cycling
             (can-cmd can-id "(conf-set 'app-to-use 0)")(setq no_app_config 1.0)
         })
 
         (if (>= FW_VERSION 6.05) {
-            (rcode-run-noret can-id (list 'set-remote-state throttle 0 0 0  direction)) ; to use with FW 6.05+
+            (rcode-run-noret can-id (list 'set-remote-state (* throttle throttle_scale) 0 0 0  direction)) ; to use with FW 6.05+
             }
         {
             (if (> throttle_dead_band 0.2 ) {
                 (if (= direction 1) (setq direction 1)(setq direction -1))
-                (canset-current-rel can-id (* throttle_dead_band direction))
+                (canset-current-rel can-id (*(* throttle_dead_band direction) throttle_scale ))
             }
             {
             (if (and (< throttle_dead_band 0.2)(> throttle_dead_band -0.2)) {
@@ -316,9 +321,10 @@
 
 (defun main () {
     (print "Self mac" (get-mac-addr))
-    (setq uart_status (to-i(eeprom-read-i 6)))
-    (if (= uart_status 0) {
+    (setq uart_status_init (to-i(eeprom-read-i 6)))
+    (if (= uart_status_init 0) {
         (setq can-id (scan-can-device can-id)) ; when ppm is enabled just use
+        (eeprom-store-i 8 can-id)
         (print "Can device:" can-id)
         (print "Listening...")}
     )
@@ -421,41 +427,45 @@
             ((eq torq_mode 0){
                 (if (= flag_l 0){ ; avoid re entry
                     ;(rcode-run-noret can-id  '(conf-set 'l-current-max-scale 0.25))
-                    (can-cmd can-id (str-from-n 0.25 "(conf-set 'l-current-max-scale %.2f)"))
+                    ;(can-cmd can-id (str-from-n 0.25 "(conf-set 'l-current-max-scale %.2f)"))
                     (setq flag_l 1)
                     (setq flag_m 0)
                     (setq flag_h 0)
                     (setq flag_s 0)
+                    (setq throttle_scale 0.25)
                 })
             })
             ((eq torq_mode 1){
                 (if (= flag_m 0){ ; avoid re entry
                     ;(rcode-run-noret can-id '(conf-set 'l-current-max-scale 0.50))
-                    (can-cmd can-id (str-from-n 0.50 "(conf-set 'l-current-max-scale %.2f)")) ; for Version 6.00
+                    ;(can-cmd can-id (str-from-n 0.50 "(conf-set 'l-current-max-scale %.2f)")) ; for Version 6.00
                     (setq flag_l 0)
                     (setq flag_m 1)
                     (setq flag_h 0)
                     (setq flag_s 0)
+                    (setq throttle_scale 0.50)
                 })
             })
             ((eq torq_mode 2){
                 (if (= flag_h 0){ ; avoid re entry
                     ;(rcode-run-noret can-id '(conf-set 'l-current-max-scale 0.75))
-                    (can-cmd can-id (str-from-n 0.75 "(conf-set 'l-current-max-scale %.2f)")) ; for Version 6.00
+                    ;(can-cmd can-id (str-from-n 0.75 "(conf-set 'l-current-max-scale %.2f)")) ; for Version 6.00
                     (setq flag_l 0)
                     (setq flag_m 0)
                     (setq flag_h 1)
                     (setq flag_s 0)
+                    (setq throttle_scale 0.75)
                 })
             })
             ((eq torq_mode 3){
                 (if (= flag_s 0){ ; avoid re entry
                     ;(rcode-run-noret can-id '(conf-set 'l-current-max-scale 1.0))
-                    (can-cmd can-id (str-from-n 1.0 "(conf-set 'l-current-max-scale %.2f)")) ; for Version 6.00
+                    ;(can-cmd can-id (str-from-n 1.0 "(conf-set 'l-current-max-scale %.2f)")) ; for Version 6.00
                     (setq flag_l 0)
                     (setq flag_m 0)
                     (setq flag_h 0)
                     (setq flag_s 1)
+                    (setq throttle_scale 1.0)
                 })
             })
          )
@@ -467,9 +477,7 @@
         (var data_send (bufcreate 55))
         (if (= is_data_received 1.0) {
             (data_to_send data_send)
-           (if (= uart_status 0) {
-               (set-motor-torque)
-            })
+            (set-motor-torque)
             (setq is_data_received 0.0)
          }
         {;else

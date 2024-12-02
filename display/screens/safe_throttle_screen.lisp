@@ -70,6 +70,5 @@
         (setq enter_menu 0)
         (setq firts_iteration_safe 0)
      })
-     (print safety_status)
 })
 @const-end
