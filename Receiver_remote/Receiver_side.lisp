@@ -142,6 +142,16 @@
     (return can-id)
 })
 
+(defun ppm_scale_range (ppm_scale) {
+    (cond
+        ((eq ppm_scale 0.25)(utils_truncate throttle_ppm 0.1 0.625))
+        ((eq ppm_scale 0.50)(utils_truncate throttle_ppm 0.1 0.75))
+        ((eq ppm_scale 0.75)(utils_truncate throttle_ppm 0.1 0.875))
+        ((eq ppm_scale 1.0) (utils_truncate throttle_ppm 0.1 0.97))
+       }
+    )
+ )
+
 (defun data-received (data) {
 
     (setq last_package_received (systime)) ; save time stamp of the last package received
@@ -152,7 +162,8 @@
     (setq ppm_status   (bufget-i8  data 7)) ; get the ppm mode.
     (setq uart_status  (bufget-i8  data 8)) ; get the uart mode.
     (setq throttle_ppm (utils_map throttle -1.0 1.0 0.0 1.0))
-    (utils_truncate throttle_ppm 0.1 0.97) ; truncate the values for the throttle ppm
+    ;(utils_truncate throttle_ppm 0.1 0.97) ; truncate the values for the throttle ppm
+    (ppm_scale_range throttle_scale)
     (setq throttle_dead_band (dead_band throttle 0.2 1.0))
 
     (if (eq uart_status 1) {
