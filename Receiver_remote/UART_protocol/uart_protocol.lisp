@@ -1,7 +1,7 @@
 ; Implement UART protocol to send current commands and get some datas from the ESC.
 
 ; Data structure
-(def COMM_SET_CURRENT       6)
+(def COMM_SET_CURRENT_ID  84); 84 is for current relative
 (def COMM_SET_BRAKE_CURRENT 7)
 (def COMM_GET_VALUES       47)
 (def BUF-SIZE 80)
@@ -69,13 +69,13 @@
     }
 
 )
-
+; for throttle_range we need to know about the current scale
 (defun uart-send () {
         (setq throttle_range (* throttle_dead_band throttle_scale))
         (bufset-i8  buffer 0 2) ; start byte
         (bufset-i8  buffer 1 5) ; payload length
-        (bufset-i8  buffer 2 COMM_SET_CURRENT) ; command id, 0x06 for COMM_SET_CURRENT
-        (bufset-i32 buffer 3 (*(* throttle_range  10000) direction)) ; Data current in mA
+        (bufset-i8  buffer 2 COMM_SET_CURRENT_ID) ; COMM_SET_CURRENT_ID 84, is for relative
+        (bufset-i32 buffer 3 (*(* throttle_range current_val) direction)) ; Data current relative
         (print throttle_range)
         (bufset-i8  checksum  0 (bufget-i8 buffer 2))
         (bufset-i32 checksum  1 (bufget-i32 buffer 3))
@@ -119,7 +119,7 @@
     (loopwhile t {
         (get-uart-values)
         (if ( = is-data-send 1) {
-            (uart-read uart-buf 75 0);(uart-read-bytes uart-buf 75 0) ; this function is blocked when data is not received
+            (uart-read uart-buf 80 0);(uart-read-bytes uart-buf 75 0) ; this function is blocked when data is not received
             (load-buffer)
             (setq is-data-send 0)
             (bufclear uart-buf);to avoid locked values when the UART connection is lost

@@ -95,7 +95,7 @@
 
 (def is_uart_start     0)
 (def is_ppm_start      0)
-
+(def currenT_val 0.0)
 ;TODO: List all can devices and check if the listed ID's belong to an ESC controller.
 ;it can be done through FW version, HW or so.
 ;define a master ESC in case a dual controller is connected.
@@ -157,6 +157,7 @@
 
     (if (eq uart_status 1) {
         (if (= is_uart_start 0) {
+            (setq is_ppm_start 0)
             (pwm-stop 0)
             (uart-init)
             (print "Uart started")
@@ -164,7 +165,14 @@
             (eeprom-store-i 6 uart_status) ; store uart status to be used when the receiver starts
             (setq uart_status_init (to-i(eeprom-read-i 6)))
          })
-        (if (< throttle 0.02)(setq COMM_SET_CURRENT 7)(setq COMM_SET_CURRENT 6))
+        (if (< throttle 0.02) {
+            (setq COMM_SET_CURRENT_ID 7) ; current brake
+            (setq current_val 10000) ; this current brake is set to 10A, (configurable by menu?)
+            }
+            {
+            (setq COMM_SET_CURRENT_ID 84) ; current rel
+            (setq current_val 100000)
+            })
         (if(= direction 1)(setq direction 1)(setq direction -1))
         (uart-send)
         (setq no_app_config 0.0)
@@ -173,6 +181,7 @@
     (if (eq ppm_status 1) {
         (if (= is_ppm_start 0) {
             (uart-stop)
+            (setq is_uart_start 0)
             (ppm-start 50 throttle_ppm 0 21 13)
             (print "ppm started")
             (setq is_ppm_start 1)
@@ -240,6 +249,7 @@
       (bufset-f32 data_send 4  (/ (to-float voltage) 10.0)); from UART
       (bufset-f32 data_send 12 (/ (to-float current) 100)); from UART
       (bufset-f32 data_send 32 (/ (to-float distance-uart) 1000)); from UART
+      ;(bufset-f32 data_send 32 (/ (to-float (* odometer 0.000621371)) 1)); from UART
      }
 
      )
