@@ -3,8 +3,8 @@
 ; Data structure
 (def COMM_SET_CURRENT_ID  84); 84 is for current relative
 (def COMM_SET_BRAKE_CURRENT 7)
-(def COMM_GET_VALUES       47)
-(def BUF-SIZE 80)
+(def COMM_GET_VALUES       4)
+(def BUF-SIZE 84)
 
 
 (define buffer         (bufcreate 10))
@@ -39,6 +39,7 @@
 (def wh-batt-left)
 (def odometer)
 (def throttle_range)
+(def tacho_abs)
 
 (def is-data-send 0)
 
@@ -47,14 +48,14 @@
 })
 
 @const-start
-(defun get-uart-values () {
+(defun get-uart-values () { ; COMM_ID is for 4 (COMM_GET_VALUES) or 47(COMM_GET_SETUP_VALUES)
 
         (define buffer-data-rcv (bufcreate 6))
         (define checksum-data-rcv (bufcreate 1))
 
         (bufset-i8 buffer-data-rcv 0 2) ; start byte
         (bufset-i8 buffer-data-rcv 1 1) ; payload length
-        (bufset-i8 buffer-data-rcv 2 COMM_GET_VALUES) ; get the whole data packet from the ESC
+        (bufset-i8 buffer-data-rcv 2 COMM_GET_VALUES);(bufset-i8 buffer-data-rcv 2 COMM_GET_VALUES) ; get the whole data packet from the ESC
 
         (bufset-i8 checksum-data-rcv 0 (bufget-i8 buffer-data-rcv 2))
 
@@ -69,6 +70,7 @@
     }
 
 )
+
 ; for throttle_range we need to know about the current scale
 (defun uart-send () {
         (setq throttle_range (* throttle_dead_band throttle_scale))
@@ -76,7 +78,6 @@
         (bufset-i8  buffer 1 5) ; payload length
         (bufset-i8  buffer 2 COMM_SET_CURRENT_ID) ; COMM_SET_CURRENT_ID 84, is for relative
         (bufset-i32 buffer 3 (*(* throttle_range current_val) direction)) ; Data current relative
-        (print throttle_range)
         (bufset-i8  checksum  0 (bufget-i8 buffer 2))
         (bufset-i32 checksum  1 (bufget-i32 buffer 3))
 
@@ -86,30 +87,12 @@
         (uart-write buffer)
     }
 )
-
+; This function is to get the datas coming from COMM_GET_VALUES_SETUP
 (defun load-buffer() {
-
-        (setq temp-fet           (bufget-i16    uart-buf 3))  ; Temp FET
-        (setq temp               (bufget-i16    uart-buf 5))  ; Motor TEMP
-        (setq current            (bufget-i32    uart-buf 7))  ; total current motor
-        (setq batt-current       (bufget-i32    uart-buf 11)) ; batt current
-        (setq duty-cycle         (bufget-i16    uart-buf 15)) ; duty cycle in percents
-        (setq erpm_l             (bufget-i32    uart-buf 17)) ; get the ERPM
-        (setq speed-uart         (bufget-i32    uart-buf 21)) ; in m/s
-        (setq voltage            (bufget-i16    uart-buf 25)) ; get the IN  voltage
-        (setq batt-level         (bufget-i16    uart-buf 27)) ; batt-level
-        (setq ah-tot             (bufget-i32    uart-buf 29)) ; ah-tot
-        (setq ah-charge-tot      (bufget-i32    uart-buf 33)) ; ah-charge-tot
-        (setq wh-tot             (bufget-i32    uart-buf 37)) ; wh-tot
-        (setq wh-charge-tot      (bufget-i32    uart-buf 41)) ; wh-charge-tot
-        (setq distance-uart      (bufget-i32    uart-buf 45)) ; distance
-        (setq distance-uart-abs  (bufget-u32    uart-buf 49)) ; Absolute distance
-        (setq pid-pos            (bufget-i32    uart-buf 53)) ; pid-pos
-        (setq fault-code         (bufget-i8     uart-buf 57)) ; fault code
-        (setq controller-id      (bufget-i8     uart-buf 58)) ; controller ID
-        (setq num-vescs          (bufget-i8     uart-buf 59)) ; num vescs
-        (setq wh-batt-left       (bufget-i32    uart-buf 60)) ; wh-batt left
-        (setq odometer           (bufget-i32    uart-buf 64)) ; odometer
+         (setq current       (bufget-i32   uart-buf 7))  ; total current motor (current in)
+         (setq voltage       (bufget-i16   uart-buf 29)) ; get the IN  voltage
+         (setq erpm_l        (bufget-i32   uart-buf 25)) ; get the ERPM
+         (setq distance-uart (bufget-i32   uart-buf 51))
    }
   )
 
@@ -119,13 +102,15 @@
     (loopwhile t {
         (get-uart-values)
         (if ( = is-data-send 1) {
-            (uart-read uart-buf 80 0);(uart-read-bytes uart-buf 75 0) ; this function is blocked when data is not received
+            (uart-read uart-buf 84 0);(uart-read-bytes uart-buf 75 0) ; this function is blocked when data is not received
             (load-buffer)
             (setq is-data-send 0)
-            (bufclear uart-buf);to avoid locked values when the UART connection is lost
         })
+        (bufclear uart-buf);to avoid locked values when the UART connection is lost
         (sleep 0.05)
 }))
 
 (spawn 150 read-thd) ; Run reader in its own thread
+
+
 

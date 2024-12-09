@@ -254,12 +254,13 @@
       (bufset-f32 data_send 4  vin); from CAN
       (bufset-f32 data_send 12 I_motor) ; from CAN
       (bufset-f32 data_send 32 distance); from CAN
+      (print distance)
      }
      {
       (bufset-f32 data_send 0  (to-float erpm_l));erpm from UART
       (bufset-f32 data_send 4  (/ (to-float voltage) 10.0)); from UART
       (bufset-f32 data_send 12 (/ (to-float current) 100)); from UART
-      (bufset-f32 data_send 32 (/ (to-float distance-uart) 1000)); from UART
+      (bufset-f32 data_send 32  (to-float distance-uart)); from UART
       ;(bufset-f32 data_send 32 (/ (to-float (* odometer 0.000621371)) 1)); from UART
      }
 
