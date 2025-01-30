@@ -202,36 +202,38 @@
         (setq no_app_config 0.0)
     })
 
-    (if(and (eq uart_status 0)(eq ppm_status 0)) {
-       (setq is_ppm_start 0)
-       (setq is_uart_start 0)
-       (eeprom-store-i 6 uart_status)
-       (eeprom-store-i 7 ppm_status)
-       (setq uart_status_init (to-i(eeprom-read-i 6)))
+    ;; Disable Dangerous CAN functionality for Onewheels (set current is very dangerous)
 
-        (if (eq no_app_config 0.0) {
-            (print "CAN-BUS started")
-            (setq can-id (to-i (eeprom-read-i 8))) ; load CAN-BUS id to avoid error when switch from UART to CAN after a power cycling
-            (can-cmd can-id "(conf-set 'app-to-use 0)")(setq no_app_config 1.0)
-        })
+    ;; (if(and (eq uart_status 0)(eq ppm_status 0)) {
+    ;;    (setq is_ppm_start 0)
+    ;;    (setq is_uart_start 0)
+    ;;    (eeprom-store-i 6 uart_status)
+    ;;    (eeprom-store-i 7 ppm_status)
+    ;;    (setq uart_status_init (to-i(eeprom-read-i 6)))
 
-        (if (>= FW_VERSION 6.05) {
-            (rcode-run-noret can-id (list 'set-remote-state (* throttle throttle_scale) 0 0 0  direction)) ; to use with FW 6.05+
-            }
-        {
-            (if (> throttle_dead_band 0.2 ) {
-                (if (= direction 1) (setq direction 1)(setq direction -1))
-                (canset-current-rel can-id (*(* throttle_dead_band direction) throttle_scale ))
-            }
-            {
-            (if (and (< throttle_dead_band 0.2)(> throttle_dead_band -0.2)) {
-                (canset-current-rel can-id 0.0)
-                })
-            })
-            (if(< throttle_dead_band -0.2) {
-                (canset-brake-rel can-id throttle_dead_band)
-            })
-        })
+    ;;     (if (eq no_app_config 0.0) {
+    ;;         (print "CAN-BUS started")
+    ;;         (setq can-id (to-i (eeprom-read-i 8))) ; load CAN-BUS id to avoid error when switch from UART to CAN after a power cycling
+    ;;         (can-cmd can-id "(conf-set 'app-to-use 0)")(setq no_app_config 1.0)
+    ;;     })
+
+    ;;     (if (>= FW_VERSION 6.05) {
+    ;;         (rcode-run-noret can-id (list 'set-remote-state (* throttle throttle_scale) 0 0 0  direction)) ; to use with FW 6.05+
+    ;;         }
+    ;;     {
+    ;;         (if (> throttle_dead_band 0.2 ) {
+    ;;             (if (= direction 1) (setq direction 1)(setq direction -1))
+    ;;             (canset-current-rel can-id (*(* throttle_dead_band direction) throttle_scale ))
+    ;;         }
+    ;;         {
+    ;;         (if (and (< throttle_dead_band 0.2)(> throttle_dead_band -0.2)) {
+    ;;             (canset-current-rel can-id 0.0)
+    ;;             })
+    ;;         })
+    ;;         (if(< throttle_dead_band -0.2) {
+    ;;             (canset-brake-rel can-id throttle_dead_band)
+    ;;         })
+    ;;     })
     })
 
   (free data)
