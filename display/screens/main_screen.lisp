@@ -1,10 +1,12 @@
 @const-start
 (defun draw_main_screen(){
     (def speed_color)
-    (if(= throttle_status 1)
-        (setq speed_color 2)
-        (setq speed_color 1)
-    )
+    ;; ;; *EDIT - REMOVED GREEN COLOR FOR THROTTLE ENABLED*
+    ;; (if(= throttle_status 1)
+    ;;     (setq speed_color 2)
+    ;;     (setq speed_color 1)
+    ;; )
+    (setq speed_color 1)
     (write_mode torq_mode (+ x_offset 2) (+ y_offset 20))
 
     (if (> (secs-since last_peer_packet) 1)

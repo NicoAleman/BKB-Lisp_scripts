@@ -142,7 +142,7 @@
             (eeprom-store-i 17 0.083)
             (eeprom-store-i 18 3.0)
             (eeprom-store-i 19 3)
-            (eeprom-store-i 20 1)
+            (eeprom-store-i 20 0) ; Default Safety-Switch to Disabled
             (eeprom-store-i 21 0)
             (eeprom-store-i 22 0)
             (eeprom-store-i 23 0)
