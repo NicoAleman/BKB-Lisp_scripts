@@ -128,12 +128,13 @@
 
         ; change direction
         (if (> main_prescaler 8){
-            (if (and (= cfg_pressed_short 1) (< (get-adc-raw) (+ (eeprom-read-i min_cal_add) 80))){
-                (if(= direction 1)
-                    (setq direction 0)
-                    (setq direction 1)
-                )
-            })
+            ;; ;; Direction Change disabled for Onewheels (may be repurposed later)
+            ;; (if (and (= cfg_pressed_short 1) (< (get-adc-raw) (+ (eeprom-read-i min_cal_add) 80))){
+            ;;     (if(= direction 1)
+            ;;         (setq direction 0)
+            ;;         (setq direction 1)
+            ;;     )
+            ;; })
 
             (if (and (= on_pressed_short 1) (< (get-adc-raw) (+ (eeprom-read-i min_cal_add) 80))){
                 (setq torq_mode (+ torq_mode 1))
