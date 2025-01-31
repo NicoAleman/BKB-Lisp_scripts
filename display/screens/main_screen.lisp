@@ -7,7 +7,7 @@
     ;;     (setq speed_color 1)
     ;; )
     (setq speed_color 1)
-    (write_mode torq_mode (+ x_offset 2) (+ y_offset 20))
+    ;; (write_mode torq_mode (+ x_offset 2) (+ y_offset 20))
 
     (if (> (secs-since last_peer_packet) 1)
        (setq pairing_status 0)

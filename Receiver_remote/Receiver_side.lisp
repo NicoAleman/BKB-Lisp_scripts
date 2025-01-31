@@ -163,8 +163,8 @@
     (setq ppm_status   (bufget-i8  data 7)) ; get the ppm mode.
     (setq uart_status  (bufget-i8  data 8)) ; get the uart mode.
     (setq throttle_ppm (utils_map throttle -1.0 1.0 0.0 1.0))
-    ;(utils_truncate throttle_ppm 0.1 0.97) ; truncate the values for the throttle ppm
-    (ppm_scale_range throttle_scale)
+    (utils_truncate throttle_ppm 0.1 0.97) ; truncate the values for the throttle ppm
+    ;(ppm_scale_range throttle_scale) ;; Temporarily remove Throttle Scale modes. If uncommented, comment above truncate line
     (setq throttle_dead_band (dead_band throttle 0.2 1.0))
 
     (if (eq uart_status 1) {
