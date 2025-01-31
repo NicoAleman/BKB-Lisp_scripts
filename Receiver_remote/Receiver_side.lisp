@@ -92,6 +92,7 @@
 (def last_package_received 0.0)
 (to-u64 last_package_received)
 (def PPM_timeout 0.3) ; [sec] time out for PPM received
+(def ppm_timeout_printed 1)
 
 (def is_uart_start     0)
 (def is_ppm_start      0)
@@ -194,7 +195,7 @@
             (uart-stop)
             (setq is_uart_start 0)
             (ppm-start 50 throttle_ppm 0 21 13)
-            (print "ppm started")
+            (print "PPM Started")
             (setq is_ppm_start 1)
             (eeprom-store-i 7 ppm_status)
          })
@@ -256,7 +257,7 @@
       (bufset-f32 data_send 4  vin); from CAN
       (bufset-f32 data_send 12 I_motor) ; from CAN
       (bufset-f32 data_send 32 distance); from CAN
-      (print distance)
+    ;;   (print distance)
      }
      {
       (bufset-f32 data_send 0  (to-float erpm_l));erpm from UART
@@ -306,7 +307,7 @@
 
     (setq cont (+ cont 1))
 
-    (if (< cont 10) {
+    (if (= cont 9) {
         (print "listening")
      (if (and (= pairing_key 64)(> signal_level -80)) {
 
@@ -503,10 +504,17 @@
             (data_to_send data_send)
             (set-motor-torque)
             (setq is_data_received 0.0)
+            (if (= ppm_timeout_printed 1) {
+                (print "PPM Data Received")
+                (setq ppm_timeout_printed 0)
+            })
          }
         {;else
            (if (> (secs-since last_package_received) PPM_timeout){
-                (print "PPM time out")
+                (if (= ppm_timeout_printed 0) {
+                    (print "PPM Timed Out")
+                    (setq ppm_timeout_printed 1)
+                })
                 (pwm-stop 0)
             })
         })
