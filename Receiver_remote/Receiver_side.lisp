@@ -234,7 +234,7 @@
     ;;             (canset-brake-rel can-id throttle_dead_band)
     ;;         })
     ;;     })
-    })
+    ;; })
 
   (free data)
  }
