@@ -24,7 +24,7 @@
          (write_trip distance 1 (+ x_offset 63) (+ y_offset 50))
     }
     {
-        (write-speed (* (speed_cal) 0.621) 0 (+ x_offset 33) (+ y_offset 19) speed_color)  ; miles
+        (write-speed (* (speed_cal) 0.621) 0 (+ x_offset 28) (+ y_offset 19) speed_color)  ; miles
         (write_trip distance 0 (+ x_offset 63) (+ y_offset 50))
     })
 })
