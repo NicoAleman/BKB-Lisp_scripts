@@ -151,8 +151,6 @@
         )
 
         (setq sleep_time data_rate)
-        (data_send)
-
     })
 })
 
@@ -166,7 +164,14 @@
     })
 })
 
+(defun data_send_th(){
+    (loopwhile t {
+        (data_send)
+        (sleep 0.02) ; Match throttle thread at 20Hz
+    })
+})
 
 ; spawn threads
 (spawn 100 display_th)
 (spawn 50 inputs_th)
+(spawn 150 data_send_th)
