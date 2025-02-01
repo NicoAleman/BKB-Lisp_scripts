@@ -39,6 +39,9 @@
 (def last_peer_packet 0.0)
 (def is_data_received 0)
 (def batt_saver)
+(def vt_throttle_data 0.0)
+(def vt_throttle_mid 0.0)
+(def vt_throttle_final 0.0)
 
 (defun esp_now_init(){
     (esp-now-start)
@@ -102,7 +105,9 @@
 
 (defun data_send() {
      (var data_send (bufcreate 40))
+     (var current_throttle throttle)
 
+     (setq vt_throttle_data current_throttle)
      (bufset-f32 data_send 0 throttle      'little-endian); throttle
      (bufset-i8 data_send 4 direction     ); direction
      (bufset-i8 data_send 5 torq_mode     ); torque mode
@@ -126,7 +131,9 @@
         (sleep 0.01)
      })
 
+     (setq vt_throttle_mid current_throttle)
      (esp-now-send peer data_send)
      (free data_send)
+     (setq vt_throttle_final current_throttle)
 
 })

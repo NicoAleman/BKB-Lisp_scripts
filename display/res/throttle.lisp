@@ -4,6 +4,8 @@
 (def throttle_status 0) ; 0 for inhibited 1 for active
 (def throttle 0.0)
 (def joy_Y 0.0)
+(def vt_joy_Y 0.0)
+(def vt_throttle_start 0.0)
 (def joy_min 0)
 (def joy_mid 0)
 (def joy_max 0)
@@ -18,6 +20,8 @@
             (setq joy_Y (get-adc-raw))
             (setq joy_Y joy_mid)
         )
+
+        (setq vt_joy_Y joy_Y)
 
         (if (and (= thum_pressed_short 1) (= menu_index 0)){
             (setq thum_pressed_short 0)
@@ -52,6 +56,8 @@
                 (setq throttle (* (utils_map joy_Y joy_mid joy_min 0.0 1.0) -1))
             )
         })
+
+        (setq vt_throttle_start throttle)
     (sleep 0.05);
     })
 })
