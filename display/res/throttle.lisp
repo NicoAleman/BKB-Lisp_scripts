@@ -39,7 +39,8 @@
         )
 
         (if(<= throttle_time_out 0){
-            (setq throttle_status safety_status) ; disable
+            ;; (setq throttle_status safety_status) ; disable
+            (setq throttle_status 1) ;; Force Enable Throttle (Safety Switch Removed)
         }
         {
             (setq throttle_status 1) ; enable
