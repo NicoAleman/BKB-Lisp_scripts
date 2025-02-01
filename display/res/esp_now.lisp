@@ -115,7 +115,12 @@
      (bufset-i8 data_send 7 ppm_status); send the ppm status
      (bufset-i8 data_send 8 uart_status); send the uart status
 
-    (if (= batt_saver 1){
+     (setq vt_throttle_mid current_throttle)
+     (esp-now-send peer data_send)
+     (free data_send)
+     (setq vt_throttle_final current_throttle)
+
+     (if (= batt_saver 1){
         (if (= menu_index 0){
             (gpio-hold 20 1) ; latch the gpio_pin_20 before enter in light sleep mode
             (gpio-hold-deepsleep 1)
@@ -126,14 +131,5 @@
             (gpio-hold-deepsleep 0)
 
          })
-     }
-     {
-        (sleep 0.01)
      })
-
-     (setq vt_throttle_mid current_throttle)
-     (esp-now-send peer data_send)
-     (free data_send)
-     (setq vt_throttle_final current_throttle)
-
 })
