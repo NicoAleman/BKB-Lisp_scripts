@@ -15,7 +15,7 @@
     (write_online pairing_status (+ x_offset 95) (+ y_offset 19))
     (write_direction direction (+ x_offset 59) (+ y_offset 0))
     (bat_soc (read_SOC) 2.5 4.25 0 1 (+ x_offset 85) (+ y_offset 0))
-    (setq vin_min (* batt_type_config 2.5)); set min and max voltage according series cells
+    (setq vin_min (* batt_type_config 3.0)); set min and max voltage according series cells
     (setq vin_max (* batt_type_config 4.2))
     (bat_soc vin vin_min vin_max 0 0  (+ x_offset 8) (+ y_offset 0))
     (write_amps I_motor (+ x_offset 3) (+ y_offset 50))

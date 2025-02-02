@@ -44,9 +44,12 @@
     (if(and (= rem_sk 1) (= (isCharging) 1)){; charging indicator
         (setq bar_val_aux (+ bar_val_aux 1))
         (if (> bar_val_aux 39)
-            (setq bar_val_aux 0)
+            (setq bar_val_aux bar_val)  ; Reset to actual SOC level instead of 0
         )
-        (setq bar_val bar_val_aux)
+        (if (> bar_val bar_val_aux)     ; Use the larger of the two values
+            (setq bar_val bar_val)
+            (setq bar_val bar_val_aux)
+        )
         (setq bar_col 12)    ; put it full green
     })
 
