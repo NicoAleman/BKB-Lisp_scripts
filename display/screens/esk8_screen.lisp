@@ -4,10 +4,21 @@
 (def firts_iteration_esk 0)
 (def firts_iteration_motor_config 0)
 (def esk8_screen_num 0)
-(def poles_config 20)
-(def wheel_diam_config 0.075)
-(def pulley_config   3.0)
-(def batt_type_config 3)
+
+;; Configuration limits
+(def MIN_POLES 16)
+(def MAX_POLES 50)
+(def MIN_WHEEL_DIAM 0.200)
+(def MAX_WHEEL_DIAM 0.999)  ; 1 meter max
+(def MIN_PULLEY 1.0)
+(def MAX_PULLEY 1.0)
+(def MIN_BATT 10)
+(def MAX_BATT 100)
+
+(def poles_config 30)
+(def wheel_diam_config 0.280)
+(def pulley_config   1.0)
+(def batt_type_config 18)
 
 @const-start
 (defun esk8_screen(){
@@ -42,12 +53,12 @@
             (img-clear text_box_2)
             (disp-render text_box_2 (+ x_offset 37) (+ y_offset 44) '(0 0xFFFFFF))
 
-            (if (> (get-adc-raw) 3000){
+            (if (and (> (get-adc-raw) 3000) (< poles_config MAX_POLES)){
                 (sleep 0.1)
                 (setq poles_config (+ poles_config 2))
                 (img-clear numb_box)
              })
-            (if (and (< (get-adc-raw) 1000)(> poles_config 2)){
+            (if (and (< (get-adc-raw) 1000)(> poles_config MIN_POLES)){
                 (sleep 0.1)
                 (setq poles_config (- poles_config 2))
                 (img-clear numb_box)
@@ -66,41 +77,41 @@
             (disp-render text_box_2 (+ x_offset 47) (+ y_offset 44) '(0 0xFFFFFF))
             (img-clear text_box_2)
 
-             (if (> (get-adc-raw) 3000){
+             (if (and (> (get-adc-raw) 3000) (< wheel_diam_config MAX_WHEEL_DIAM)){
                 (sleep 0.1)
                 (setq wheel_diam_config (+ wheel_diam_config 0.001))
                 (img-clear numb_box)
              })
-            (if (and (< (get-adc-raw) 1000)(>= wheel_diam_config 0.001)){
+            (if (and (< (get-adc-raw) 1000)(> wheel_diam_config MIN_WHEEL_DIAM)){
                 (sleep 0.1)
                 (setq wheel_diam_config (- wheel_diam_config 0.001))
                 (img-clear numb_box)
             })
         ))
+        ;; ((eq esk8_screen_num 2) (progn
+        ;;     (txt-block-l text_box 1 0 0  font_9x14 "Pulley reduction")
+        ;;     (disp-render text_box (+ x_offset 1) (+ y_offset -1) '(0 0xFFFFFF))
+        ;;     (img-clear text_box)
+
+        ;;     (txt-block-c numb_box 1 60 0  font_20x30 (str-from-n pulley_config "%.1f:1"));
+        ;;     (disp-render numb_box (+ x_offset 4) (+ y_offset 17) '(0 0xFFFFFF))
+        ;;     (img-clear numb_box)
+
+        ;;     (img-clear text_box_2)
+        ;;     (disp-render text_box_2 (+ x_offset 47) (+ y_offset 44) '(0 0xFFFFFF))
+
+        ;;     (if (and (> (get-adc-raw) 3000) (< pulley_config MAX_PULLEY)){
+        ;;         (sleep 0.1)
+        ;;         (setq pulley_config (+ pulley_config 0.1))
+        ;;         (img-clear numb_box)
+        ;;      })
+        ;;     (if (and (< (get-adc-raw) 1000)(> pulley_config MIN_PULLEY)){
+        ;;         (sleep 0.1)
+        ;;         (setq pulley_config (- pulley_config 0.1))
+        ;;         (img-clear numb_box)
+        ;;     })
+        ;; ))
         ((eq esk8_screen_num 2) (progn
-            (txt-block-l text_box 1 0 0  font_9x14 "Pulley reduction")
-            (disp-render text_box (+ x_offset 1) (+ y_offset -1) '(0 0xFFFFFF))
-            (img-clear text_box)
-
-            (txt-block-c numb_box 1 60 0  font_20x30 (str-from-n pulley_config "%.1f:1"));
-            (disp-render numb_box (+ x_offset 4) (+ y_offset 17) '(0 0xFFFFFF))
-            (img-clear numb_box)
-
-            (img-clear text_box_2)
-            (disp-render text_box_2 (+ x_offset 47) (+ y_offset 44) '(0 0xFFFFFF))
-
-            (if (> (get-adc-raw) 3000){
-                (sleep 0.1)
-                (setq pulley_config (+ pulley_config 0.1))
-                (img-clear numb_box)
-             })
-            (if (and (< (get-adc-raw) 1000)( > pulley_config 0.1)){
-                (sleep 0.1)
-                (setq pulley_config (- pulley_config 0.1))
-                (img-clear numb_box)
-            })
-        ))
-        ((eq esk8_screen_num 3) (progn
             (txt-block-l text_box 1 0 0  font_9x14 "Battery")
             (disp-render text_box (+ x_offset 1) (+ y_offset -1) '(0 0xFFFFFF))
             (img-clear text_box)
@@ -112,18 +123,18 @@
             (img-clear text_box_2)
             (disp-render text_box_2 (+ x_offset 47) (+ y_offset 44) '(0 0xFFFFFF))
 
-            (if (> (get-adc-raw) 3000){
+            (if (and (> (get-adc-raw) 3000) (< batt_type_config MAX_BATT)){
                 (sleep 0.1)
                 (setq batt_type_config (+ batt_type_config 1))
                 (img-clear numb_box)
              })
-            (if (and (< (get-adc-raw) 1000)(> batt_type_config 1)){
+            (if (and (< (get-adc-raw) 1000)(> batt_type_config MIN_BATT)){
                 (sleep 0.1)
                 (setq batt_type_config (- batt_type_config 1))
                 (img-clear numb_box)
             })
         ))
-        ((eq esk8_screen_num 4) (progn
+        ((eq esk8_screen_num 3) (progn
         (if (= firts_iteration_motor_config 0) {
             (disp-clear)
             (def text_box (img-buffer 'indexed2 127 14))
@@ -148,7 +159,7 @@
     (if (= cfg_pressed_short 1){
         (setq cfg_pressed_short 0)
         (setq esk8_screen_num (+ esk8_screen_num 1))
-        (if (> esk8_screen_num 4)
+        (if (> esk8_screen_num 3)
             (setq esk8_screen_num 0)
             (setq firts_iteration_motor_config 0)
         )

@@ -91,30 +91,30 @@
         (print "eeprom 15 error, writing default")
         (eeprom-store-i 15 0)
     })
-    (setq test_value (to-i (eeprom-read-i 16)))
-    (if(or (< test_value 2)(> test_value 50)){
-        (print "eeprom 15 error, writing default")
-        (eeprom-store-i 16 14)
+    (setq test_value (to-i (eeprom-read-i 16))) ; motor poles
+    (if(or (< test_value 16)(> test_value 50)){
+        (print "eeprom 16 error (motor poles), writing default: 30")
+        (eeprom-store-i 16 30)
     })
-    (setq test_value (to-i (eeprom-read-f 17)))
-    (if(or (< test_value 0.0)(> test_value 0.8)){
-        (print "eeprom 17 error, writing default")
-        (eeprom-store-f 17 0.083)
+    (setq test_value (to-float (eeprom-read-f 17))) ; wheel diameter
+    (if(or (< test_value 0.2)(> test_value 0.8)){
+        (print "eeprom 17 error (wheel diameter), writing default: 0.280")
+        (eeprom-store-f 17 0.280)
     })
-    (setq test_value (to-i (eeprom-read-f 18)))
-    (if(or (< test_value 0.1)(> test_value 100.0)){
-        (print "eeprom 18 error, writing default")
-        (eeprom-store-f 18 3.0)
+    (setq test_value (to-float (eeprom-read-f 18))) ; gear ratio
+    (if(not-eq test_value 1.0){ ; Force Off (Onewheel-only)
+        (print "eeprom 18 error (gear ratio), writing default: 1.0")
+        (eeprom-store-f 18 1.0)
     })
-    (setq test_value (to-i (eeprom-read-i 19)))
-    (if(or (< test_value 1)(> test_value 100)){
-        (print "eeprom 19 error, writing default")
-        (eeprom-store-i 19 3)
+    (setq test_value (to-i (eeprom-read-i 19))) ; s-count
+    (if(or (< test_value 10)(> test_value 100)){
+        (print "eeprom 19 error (s-count), writing default: 18")
+        (eeprom-store-i 19 18)
     })
-    (setq test_value (to-i (eeprom-read-i 20)))
-    (if(or (< test_value 0)(> test_value 1)){
-        (print "eeprom 20 error, writing default")
-        (eeprom-store-i 20 1)
+    (setq test_value (to-i (eeprom-read-i 20))) ; safety status
+    (if(not-eq test_value 0){ ; Force Off (Onewheel-only)
+        (print "eeprom 20 error (safety status), writing default: 0")
+        (eeprom-store-i 20 0)
     })
 })
 
@@ -138,10 +138,10 @@
             (eeprom-store-i 13 0) ; ppm status
             (eeprom-store-i 14 0)
             (eeprom-store-i 15 0)
-            (eeprom-store-i 16 14)
-            (eeprom-store-i 17 0.083)
-            (eeprom-store-i 18 3.0)
-            (eeprom-store-i 19 3)
+            (eeprom-store-i 16 30) ; motor poles
+            (eeprom-store-i 17 0.280) ; wheel diameter
+            (eeprom-store-i 18 1.0) ; gear ratio
+            (eeprom-store-i 19 18) ; s-count
             (eeprom-store-i 20 0) ; Default Safety-Switch to Disabled
             (eeprom-store-i 21 0)
             (eeprom-store-i 22 0)
