@@ -128,22 +128,20 @@
 
         ; change direction
         (if (> main_prescaler 8){
-            ;; ;; Direction Change disabled for Onewheels (may be repurposed later)
-            ;; (if (and (= cfg_pressed_short 1) (< (get-adc-raw) (+ (eeprom-read-i min_cal_add) 80))){
-            ;;     (if(= direction 1)
-            ;;         (setq direction 0)
-            ;;         (setq direction 1)
-            ;;     )
-            ;; })
+            (if (and (= cfg_pressed_short 1) (< (get-adc-raw) (+ (eeprom-read-i min_cal_add) 80))){
+                (if(= direction 1)
+                    (setq direction 0)
+                    (setq direction 1)
+                )
+            })
 
-            ;; ;; Throttle Scale disabled for Onewheels, until scaling logic is fixed
-            ;; (if (and (= on_pressed_short 1) (< (get-adc-raw) (+ (eeprom-read-i min_cal_add) 80))){
-            ;;     (setq torq_mode (+ torq_mode 1))
-            ;;     (if(> torq_mode 3)
-            ;;         (setq torq_mode 0)
-            ;;     )
-            ;;     (eeprom-store-i torq_mode_add torq_mode)
-            ;; })
+            (if (and (= on_pressed_short 1) (< (get-adc-raw) (+ (eeprom-read-i min_cal_add) 80))){
+                (setq torq_mode (+ torq_mode 1))
+                (if(> torq_mode 2)
+                    (setq torq_mode 0)
+                )
+                (eeprom-store-i torq_mode_add torq_mode)
+            })
         })
 
         (if (> main_prescaler 8)

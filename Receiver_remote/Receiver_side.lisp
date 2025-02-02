@@ -81,10 +81,11 @@
 (def pairing_key    0)
 (def data_rate 0.01)
 (def signal_level   0)
+(def scaled_throttle 0.0)
 (def throttle_uart 0)
 (def throttle_ppm 0.0)
 (def throttle_dead_band 0.0)
-(def throttle_scale 0)
+(def throttle_scale 1.0)
 (def dead 0.0)
 (def ppm_input 0.0)
 (def ppm_status 0.0)
@@ -148,15 +149,21 @@
     (return can-id)
 })
 
-(defun ppm_scale_range (ppm_scale) {
-    (cond
-        ((eq ppm_scale 0.25)(utils_truncate throttle_ppm 0.1 0.625))
-        ((eq ppm_scale 0.50)(utils_truncate throttle_ppm 0.1 0.75))
-        ((eq ppm_scale 0.75)(utils_truncate throttle_ppm 0.1 0.875))
-        ((eq ppm_scale 1.0) (utils_truncate throttle_ppm 0.1 0.97))
-       }
-    )
- )
+;; (defun ppm_scale_range (ppm_scale) {
+;;     (cond
+;;         ((eq ppm_scale 0.25)(utils_truncate throttle_ppm 0.1 0.625))
+;;         ((eq ppm_scale 0.50)(utils_truncate throttle_ppm 0.1 0.75))
+;;         ((eq ppm_scale 0.75)(utils_truncate throttle_ppm 0.1 0.875))
+;;         ((eq ppm_scale 1.0) (utils_truncate throttle_ppm 0.1 0.97))
+;;        }
+;;     )
+;;  )
+
+(defun scale_throttle (raw_throttle scale) {
+    (if (> raw_throttle 0)
+        (* raw_throttle scale)  ; Scale positive values
+        raw_throttle)           ; Leave negative values unchanged
+})
 
 (defun data-received (data) {
 
@@ -167,7 +174,10 @@
     (setq pairing_key  (bufget-i8  data 6)) ; get the pairing key 67
     (setq ppm_status   (bufget-i8  data 7)) ; get the ppm mode.
     (setq uart_status  (bufget-i8  data 8)) ; get the uart mode.
-    (setq throttle_ppm (utils_map throttle -1.0 1.0 0.0 1.0))
+
+    (setq scaled_throttle (scale_throttle throttle throttle_scale))
+    
+    (setq throttle_ppm (utils_map scaled_throttle -1.0 1.0 0.0 1.0))
     (utils_truncate throttle_ppm 0.1 0.97) ; truncate the values for the throttle ppm
     ;(ppm_scale_range throttle_scale) ;; Temporarily remove Throttle Scale modes. If uncommented, comment above truncate line
     (setq throttle_dead_band (dead_band throttle 0.2 1.0))
@@ -193,7 +203,7 @@
         ;; (if(= direction 1)(setq direction 1)(setq direction -1))
 
         ; Convert throttle (-1 to 1) to UART range (0 to 255)
-        (setq throttle_uart (+ (* (+ throttle 1) 127.5) 0.5))
+        (setq throttle_uart (+ (* (+ scaled_throttle 1) 127.5) 0.5))
 
         (uart-send)
         (setq no_app_config 0.0)
@@ -466,7 +476,7 @@
                     (setq flag_m 0)
                     (setq flag_h 0)
                     (setq flag_s 0)
-                    (setq throttle_scale 0.25)
+                    (setq throttle_scale 0.40) ;; Simplified for Onewheels
                 })
             })
             ((eq torq_mode 1){
@@ -477,7 +487,7 @@
                     (setq flag_m 1)
                     (setq flag_h 0)
                     (setq flag_s 0)
-                    (setq throttle_scale 0.50)
+                    (setq throttle_scale 0.70) ;; Simplified for Onewheels
                 })
             })
             ((eq torq_mode 2){
@@ -488,7 +498,7 @@
                     (setq flag_m 0)
                     (setq flag_h 1)
                     (setq flag_s 0)
-                    (setq throttle_scale 0.75)
+                    (setq throttle_scale 1.0) ;; Simplified for Onewheels
                 })
             })
             ((eq torq_mode 3){
@@ -499,7 +509,7 @@
                     (setq flag_m 0)
                     (setq flag_h 0)
                     (setq flag_s 1)
-                    (setq throttle_scale 1.0)
+                    (setq throttle_scale 1.0) ;; Unused on Onewheels
                 })
             })
          )
