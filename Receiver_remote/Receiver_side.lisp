@@ -1,3 +1,7 @@
+; Initialize PWM/TX pin as output and low immediately
+(gpio-configure 21 'pin-mode-out)
+(gpio-write 21 0)
+
 ;Script adapted for FW versions starting from 6.00. For FW version 6.0.5 or higher
 ;it is necessary to install the code-server. code-server allows the execution of
 ;other functionalities that are not implemented in 6.00 version.
