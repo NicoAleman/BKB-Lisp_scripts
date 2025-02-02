@@ -104,7 +104,7 @@
 
 
 (defun data_send() {
-     (var data_send (bufcreate 40))
+     (var data_send (bufcreate 10))
      (var current_throttle throttle)
 
      (setq vt_throttle_data current_throttle)

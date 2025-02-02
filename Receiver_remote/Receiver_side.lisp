@@ -497,11 +497,12 @@
      })
  })
 
+(def shared_data_buffer (bufcreate 55)) ; Create buffer once at file level
+
 (defun loop-state () {
     (loopwhile-thd 50 t {
-        (var data_send (bufcreate 55))
         (if (= is_data_received 1.0) {
-            (data_to_send data_send)
+            (data_to_send shared_data_buffer)
             (set-motor-torque)
             (setq is_data_received 0.0)
             (if (= ppm_timeout_printed 1) {
@@ -518,7 +519,6 @@
                 (pwm-stop 0)
             })
         })
-        (free data_send)
         (sleep 0.02)
        }
      )
