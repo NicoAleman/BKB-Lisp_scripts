@@ -81,6 +81,7 @@
 (def pairing_key    0)
 (def data_rate 0.01)
 (def signal_level   0)
+(def throttle_uart 0)
 (def throttle_ppm 0.0)
 (def throttle_dead_band 0.0)
 (def throttle_scale 0)
@@ -95,8 +96,8 @@
 (def start_time 0)
 (def last_package_received 0.0)
 (to-u64 last_package_received)
-(def PPM_timeout 0.3) ; [sec] time out for PPM received
-(def ppm_timeout_printed 1)
+(def remote_timeout 0.3) ; [sec] time out for Remote Data received
+(def remote_timeout_printed 1)
 
 (def is_uart_start     0)
 (def is_ppm_start      0)
@@ -181,15 +182,19 @@
             (eeprom-store-i 6 uart_status) ; store uart status to be used when the receiver starts
             (setq uart_status_init (to-i(eeprom-read-i 6)))
          })
-        (if (< throttle 0.02) {
-            (setq COMM_SET_CURRENT_ID 7) ; current brake
-            (setq current_val 10000) ; this current brake is set to 10A, (configurable by menu?)
-            }
-            {
-            (setq COMM_SET_CURRENT_ID 84) ; current rel
-            (setq current_val 100000)
-            })
-        (if(= direction 1)(setq direction 1)(setq direction -1))
+        ;; (if (< throttle 0.02) {
+        ;;     (setq COMM_SET_CURRENT_ID 7) ; current brake
+        ;;     (setq current_val 10000) ; this current brake is set to 10A, (configurable by menu?)
+        ;;     }
+        ;;     {
+        ;;     (setq COMM_SET_CURRENT_ID 84) ; current rel
+        ;;     (setq current_val 100000)
+        ;;     })
+        ;; (if(= direction 1)(setq direction 1)(setq direction -1))
+
+        ; Convert throttle (-1 to 1) to UART range (0 to 255)
+        (setq throttle_uart (+ (* (+ throttle 1) 127.5) 0.5))
+
         (uart-send)
         (setq no_app_config 0.0)
     })
@@ -509,16 +514,16 @@
             (data_to_send shared_data_buffer)
             (set-motor-torque)
             (setq is_data_received 0.0)
-            (if (= ppm_timeout_printed 1) {
-                (print "PPM Data Received")
-                (setq ppm_timeout_printed 0)
+            (if (= remote_timeout_printed 1) {
+                (print "Remote Data Received")
+                (setq remote_timeout_printed 0)
             })
          }
         {;else
-           (if (> (secs-since last_package_received) PPM_timeout){
-                (if (= ppm_timeout_printed 0) {
-                    (print "PPM Timed Out")
-                    (setq ppm_timeout_printed 1)
+           (if (> (secs-since last_package_received) remote_timeout){
+                (if (= remote_timeout_printed 0) {
+                    (print "Remote Timed Out")
+                    (setq remote_timeout_printed 1)
                 })
                 (pwm-stop 0)
             })

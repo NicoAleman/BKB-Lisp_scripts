@@ -1,15 +1,16 @@
 ; Implement UART protocol to send current commands and get some datas from the ESC.
 
 ; Data structure
-(def COMM_SET_CURRENT_ID  84); 84 is for current relative
+(def COMM_SET_CURRENT_ID    84); 84 is for current relative
 (def COMM_SET_BRAKE_CURRENT 7)
-(def COMM_GET_VALUES       4)
+(def COMM_GET_VALUES        4)
+(def COMM_SET_CHUCK_DATA    35) ; VESC UART Remote Data
 (def BUF-SIZE 84)
 
-
-(define buffer         (bufcreate 10))
+; Set buffer sizes to accommodate SET_CHUCK_DATA packet
+(define buffer         (bufcreate 20))
 (define buffer_motor   (bufcreate 10))
-(define checksum       (bufcreate 5))
+(define checksum       (bufcreate 18))
 (define uart-buf       (bufcreate BUF-SIZE))
 
 (def crc_buffer '())
@@ -71,22 +72,51 @@
 
 )
 
-; for throttle_range we need to know about the current scale
 (defun uart-send () {
-        (setq throttle_range (* throttle_dead_band throttle_scale))
-        (bufset-i8  buffer 0 2) ; start byte
-        (bufset-i8  buffer 1 5) ; payload length
-        (bufset-i8  buffer 2 COMM_SET_CURRENT_ID) ; COMM_SET_CURRENT_ID 84, is for relative
-        (bufset-i32 buffer 3 (*(* throttle_range current_val) direction)) ; Data current relative
-        (bufset-i8  checksum  0 (bufget-i8 buffer 2))
-        (bufset-i32 checksum  1 (bufget-i32 buffer 3))
+    (bufset-i8  buffer 0 COMM_SET_CHUCK_DATA) ; Chuck data command
+    (bufset-i8  buffer 1 128) ; js_x (neutral)
+    (bufset-i8  buffer 2 throttle_uart) ; js_y (0-255)
+    (bufset-i8  buffer 3 0) ; bt_c (button C)
+    (bufset-i8  buffer 4 0) ; bt_z (button Z)
 
-        (setq crc_buffer (crc16 checksum)) ; command id+payload data to calculate the checksum
-        (bufset-i16 buffer 7 crc_buffer)
-        (bufset-i8  buffer 9 3)
-        (uart-write buffer)
-    }
-)
+    ; Acceleration data (6 bytes of zeros)
+    (bufset-i8  buffer 5 0) ; acc_x low byte
+    (bufset-i8  buffer 6 0) ; acc_x high byte
+    (bufset-i8  buffer 7 0) ; acc_y low byte
+    (bufset-i8  buffer 8 0) ; acc_y high byte
+    (bufset-i8  buffer 9 0) ; acc_z low byte
+    (bufset-i8  buffer 10 0) ; acc_z high byte
+
+    (bufset-i8  buffer 11 1) ; rev_has_state
+    (bufset-i8  buffer 12 (if (= direction 1) 0 1)) ; is_rev
+    
+    ; Calculate CRC on just the payload
+    (setq crc_buffer (crc16 buffer 13))
+    
+    ; Now build the complete packet
+    (bufset-i8  checksum 0 2) ; start byte
+    (bufset-i8  checksum 1 13) ; payload length (13 bytes total)
+    ; Copy payload
+    (bufset-i8 checksum 2 (bufget-i8 buffer 0))
+    (bufset-i8 checksum 3 (bufget-i8 buffer 1))
+    (bufset-i8 checksum 4 (bufget-i8 buffer 2))
+    (bufset-i8 checksum 5 (bufget-i8 buffer 3))
+    (bufset-i8 checksum 6 (bufget-i8 buffer 4))
+    (bufset-i8 checksum 7 (bufget-i8 buffer 5))
+    (bufset-i8 checksum 8 (bufget-i8 buffer 6))
+    (bufset-i8 checksum 9 (bufget-i8 buffer 7))
+    (bufset-i8 checksum 10 (bufget-i8 buffer 8))
+    (bufset-i8 checksum 11 (bufget-i8 buffer 9))
+    (bufset-i8 checksum 12 (bufget-i8 buffer 10))
+    (bufset-i8 checksum 13 (bufget-i8 buffer 11))
+    (bufset-i8 checksum 14 (bufget-i8 buffer 12))
+    ; Add CRC and stop byte
+    (bufset-i16 checksum 15 crc_buffer)
+    (bufset-i8  checksum 17 3) ; stop byte
+
+    (uart-write checksum)
+})
+
 ; This function is to get the datas coming from COMM_GET_VALUES_SETUP
 (defun load-buffer() {
          (setq current       (bufget-i32   uart-buf 7))  ; total current motor (current in)
