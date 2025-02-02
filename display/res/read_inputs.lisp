@@ -17,22 +17,44 @@
    (* (get-adc 0) 1422 )
 })
 
-(defun read_on(){
+(def button_state_cfg 0)  ; 0 = not pressed, 1 = pressed
+(def button_state_on 0)   ; 0 = not pressed, 1 = pressed
+(def press_start_time_cfg 0.0)
+(def press_start_time_on 0.0)
+(def last_short_on 0)       ; Track previous short press state
+(def last_short_cfg 0)      ; Track previous short press state
 
-    (if(= (gpio-read on_button) 1) {
-        (setq secs (secs-since last_update))
-        (if(and (>= secs button_time_short ) (<= secs (+ button_time_short 0.1))) {
-            (setq on_pressed_short 1)  
-        })
-        (if(and (>= secs button_time_long ) (< secs (+ button_time_long 0.1))) {
-            (setq on_pressed_long 1)  
-        })
-    }
-    {;else
-        (setq last_update (systime))
+(defun read_on(){
+    (def current_state (eq (gpio-read on_button) 1))
+    
+    ; Auto-clear flags after one tick
+    (if (and (= on_pressed_short 1) (= last_short_on 1)) {
         (setq on_pressed_short 0)
-        (setq on_pressed_long 0)
-    })   
+    })
+    (setq last_short_on on_pressed_short)
+    
+    ; Button just pressed
+    (if (and current_state (eq button_state_on 0)) {
+        (setq press_start_time_on (systime))
+        (setq button_state_on 1)
+    })
+    
+    ; Check for long press while button is held
+    (if (and current_state (eq button_state_on 1)) {
+        (def press_duration (/ (- (systime) press_start_time_on) 1000.0))
+        (if (>= press_duration button_time_long) {
+            (setq on_pressed_long 1)
+        })
+    })
+    
+    ; Button just released
+    (if (and (not current_state) (eq button_state_on 1)) {
+        (def press_duration (/ (- (systime) press_start_time_on) 1000.0))
+        (if (< press_duration button_time_long) {
+            (setq on_pressed_short 1)  ; Only trigger short if no long press happened
+        })
+        (setq button_state_on 0)
+    })
 })
 @const-end
 
@@ -57,23 +79,41 @@
 
 (def last_update_cfg 0)
 (def secs_cfg 0)
+(def button_state 0)  ; 0 = not pressed, 1 = pressed
+(def press_start_time 0.0)
+
 @const-start
 (defun read_cfg(){
+    (def current_state (eq (read_analog_button) 2))
     
-    (if(= (read_analog_button) 2) {
-        (setq secs_cfg (secs-since last_update_cfg))
-        (if(and (>= secs_cfg button_time_short ) (<= secs_cfg (+ button_time_short 0.1))) {
-            (setq cfg_pressed_short 1)  
-        })
-        (if(and (>= secs_cfg button_time_long ) (< secs_cfg (+ button_time_long 0.1))) {
-            (setq cfg_pressed_long 1)  
-        })
-    }
-    {;else
-        (setq last_update_cfg (systime))
+    ; Auto-clear flags after one tick
+    (if (and (= cfg_pressed_short 1) (= last_short_cfg 1)) {
         (setq cfg_pressed_short 0)
-        (setq cfg_pressed_long 0)
-    })               
+    })
+    (setq last_short_cfg cfg_pressed_short)
+    
+    ; Button just pressed
+    (if (and current_state (eq button_state_cfg 0)) {
+        (setq press_start_time_cfg (systime))
+        (setq button_state_cfg 1)
+    })
+    
+    ; Check for long press while button is held
+    (if (and current_state (eq button_state_cfg 1)) {
+        (def press_duration (/ (- (systime) press_start_time_cfg) 1000.0))
+        (if (>= press_duration button_time_long) {
+            (setq cfg_pressed_long 1)
+        })
+    })
+    
+    ; Button just released
+    (if (and (not current_state) (eq button_state_cfg 1)) {
+        (def press_duration (/ (- (systime) press_start_time_cfg) 1000.0))
+        (if (< press_duration button_time_long) {
+            (setq cfg_pressed_short 1)  ; Only trigger short if no long press happened
+        })
+        (setq button_state_cfg 0)
+    })
 })
 @const-end
 (def last_update_thum 0)

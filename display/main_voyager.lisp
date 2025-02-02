@@ -110,43 +110,39 @@
 ; display thread
 (defun display_th(){
     (loopwhile t {
-        (setq main_prescaler (+ main_prescaler 1))
-        (cond
-        ((eq menu_index 0) (draw_main_screen))
-        ((eq menu_index 1) (config_screen))
-        )
+        ;; (setq main_prescaler (+ main_prescaler 1))
+        (cond 
+            ((eq menu_index 0) (progn 
+                (draw_main_screen)
 
-        (if (= cfg_pressed_long 1){
-            (setq menu_index (+ menu_index 1))
-            (setq cfg_pressed_long 0)
-            (setq cfg_pressed_short 0)
-        })
+                ; Handle direction change on short cfg button press
+                (if (and (= cfg_pressed_short 1) (< (get-adc-raw) (+ (eeprom-read-i min_cal_add) 80))) {
+                    (setq direction (if (= direction 1) 0 1))
+                    (setq cfg_pressed_short 0)
+                })
 
-        (if (= on_pressed_long 1){
+                ; Handle torque mode change on short on button press
+                (if (and (= on_pressed_short 1) (< (get-adc-raw) (+ (eeprom-read-i min_cal_add) 80))) {
+                    (setq torq_mode (+ torq_mode 1))
+                    (if (> torq_mode 2)
+                        (setq torq_mode 0)
+                    )
+                    (eeprom-store-i torq_mode_add torq_mode)
+                    (setq on_pressed_short 0)
+                })
+
+                ; Enter config mode on long press of cfg button
+                (if (= cfg_pressed_long 1) {
+                    (setq cfg_pressed_long 0)
+                    (setq menu_index 1)
+                })))
+            ((eq menu_index 1) (config_screen)))
+
+        ; Only power off on long press of on button
+        (if (= on_pressed_long 1) {
             (off_sequence)
+            (setq on_pressed_long 0)
         })
-
-        ; change direction
-        (if (> main_prescaler 8){
-            (if (and (= cfg_pressed_short 1) (< (get-adc-raw) (+ (eeprom-read-i min_cal_add) 80))){
-                (if(= direction 1)
-                    (setq direction 0)
-                    (setq direction 1)
-                )
-            })
-
-            (if (and (= on_pressed_short 1) (< (get-adc-raw) (+ (eeprom-read-i min_cal_add) 80))){
-                (setq torq_mode (+ torq_mode 1))
-                (if(> torq_mode 2)
-                    (setq torq_mode 0)
-                )
-                (eeprom-store-i torq_mode_add torq_mode)
-            })
-        })
-
-        (if (> main_prescaler 8)
-            (setq main_prescaler 0)
-        )
 
         (setq sleep_time data_rate)
     })
