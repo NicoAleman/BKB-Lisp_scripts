@@ -174,6 +174,7 @@
     (setq pairing_key  (bufget-i8  data 6)) ; get the pairing key 67
     (setq ppm_status   (bufget-i8  data 7)) ; get the ppm mode.
     (setq uart_status  (bufget-i8  data 8)) ; get the uart mode.
+    (setq button_state (bufget-i8  data 9)) ; (0 = None, 1 = CFG, 2 = Thumb, 3 = Both)
 
     (setq scaled_throttle (scale_throttle throttle throttle_scale))
     

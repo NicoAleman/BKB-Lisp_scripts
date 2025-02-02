@@ -105,7 +105,7 @@
 
 
 (defun data_send() {
-     (var data_send (bufcreate 10))
+     (var data_send (bufcreate 11))
      (var current_throttle throttle)
 
      (setq vt_throttle_data current_throttle)
@@ -115,6 +115,7 @@
      (bufset-i8 data_send 6 pairing_key_T)
      (bufset-i8 data_send 7 ppm_status); send the ppm status
      (bufset-i8 data_send 8 uart_status); send the uart status
+     (bufset-i8 data_send 9 return_analog); current button state (CFG Button + Thumb Button)
 
      (esp-now-send peer data_send)
      (free data_send)

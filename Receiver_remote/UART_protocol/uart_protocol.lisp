@@ -76,8 +76,8 @@
     (bufset-i8  buffer 0 COMM_SET_CHUCK_DATA) ; Chuck data command
     (bufset-i8  buffer 1 128) ; js_x (neutral)
     (bufset-i8  buffer 2 throttle_uart) ; js_y (0-255)
-    (bufset-i8  buffer 3 0) ; bt_c (button C)
-    (bufset-i8  buffer 4 0) ; bt_z (button Z)
+    (bufset-i8  buffer 3 (if (or (= button_state 1) (= button_state 3)) 1 0)) ; bt_c (button C - Thumb Click)
+    (bufset-i8  buffer 4 (if (or (= button_state 2) (= button_state 3)) 1 0)) ; bt_z (button Z - Cfg Button)
 
     ; Acceleration data (6 bytes of zeros)
     (bufset-i8  buffer 5 0) ; acc_x low byte
