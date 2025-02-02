@@ -2,12 +2,23 @@
 (def throttle_time_out 0.0)
 (def throttle_status 0) ; 0 for inhibited 1 for active
 (def throttle 0.0)
+(def raw_throttle 0.0)
 (def joy_Y 0.0)
 (def vt_joy_Y 0.0)
-(def vt_throttle_start 0.0)
 (def joy_min 0)
 (def joy_mid 0)
 (def joy_max 0)
+
+;; For logging in VESC Tool
+(def vt_throttle_raw 0.0)
+(def vt_throttle_filtered 0.0)
+
+;; Filter coefficient (0.0 to 1.0)
+;; Higher values = less filtering but lower latency
+;; Lower values = more filtering but higher latency
+(def NOISE_THRESHOLD 0.10)  ; Scale from Small Alpha to Large Alpha as rate of change approaches this threshold
+(def SMALL_CHANGE_ALPHA 0.1)  ; heavy filtering for noise / small changes
+(def LARGE_CHANGE_ALPHA 1.0)  ; very light filtering for real, rapid movements
 
 (defun throttle_th(){
     (loopwhile t{
@@ -47,17 +58,42 @@
 
         (if(= throttle_status 1){
             (if (> joy_Y joy_mid)
-                (setq throttle (utils_map joy_Y joy_mid joy_max 0.0 1.0))
-                (setq throttle (* (utils_map joy_Y joy_mid joy_min 0.0 1.0) -1))
+                (setq raw_throttle (utils_map joy_Y joy_mid joy_max 0.0 1.0))
+                (setq raw_throttle (* (utils_map joy_Y joy_mid joy_min 0.0 1.0) -1))
             )
         }
         {
             (if (<= joy_Y joy_mid)
-                (setq throttle (* (utils_map joy_Y joy_mid joy_min 0.0 1.0) -1))
+                (setq raw_throttle (* (utils_map joy_Y joy_mid joy_min 0.0 1.0) -1))
             )
         })
 
-        (setq vt_throttle_start throttle)
+        ;; Apply adaptive filter with smooth transition
+        (let ((change (abs (- raw_throttle throttle))))
+            (if (<= change NOISE_THRESHOLD)
+                ;; Scale alpha smoothly between SMALL_CHANGE_ALPHA and LARGE_CHANGE_ALPHA
+                (let (
+                    ;; Calculate how close we are to the threshold (0.0 to 1.0)
+                    (scale_factor (/ change NOISE_THRESHOLD))
+                    ;; Calculate the total range between our two alpha values
+                    (alpha_range (- LARGE_CHANGE_ALPHA SMALL_CHANGE_ALPHA))
+                    ;; Calculate the current alpha by interpolating between SMALL and LARGE
+                    (current_alpha (+ SMALL_CHANGE_ALPHA (* scale_factor alpha_range)))
+                ){
+                    ;; Apply EMA filter with our interpolated alpha
+                    (setq throttle (+ (* current_alpha raw_throttle)                 ; Weight of new value
+                                    (* (- 1.0 current_alpha) throttle)))             ; Weight of old value
+                })
+                
+                ;; For changes beyond NOISE_THRESHOLD, use LARGE_CHANGE_ALPHA
+                (setq throttle (+ (* LARGE_CHANGE_ALPHA raw_throttle)                ; Weight of new value
+                                (* (- 1.0 LARGE_CHANGE_ALPHA) throttle)))            ; Weight of old value
+            )
+        )
+        
+        ;; Log raw and filtered throttle values for VESC Tool
+        (setq vt_throttle_raw raw_throttle)
+        (setq vt_throttle_filtered throttle)
 
         (data_send)
         

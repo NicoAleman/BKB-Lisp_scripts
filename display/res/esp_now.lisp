@@ -39,8 +39,9 @@
 (def last_peer_packet 0.0)
 (def is_data_received 0)
 (def batt_saver)
+
+; For logging in VESC Tool
 (def vt_throttle_data 0.0)
-(def vt_throttle_mid 0.0)
 (def vt_throttle_final 0.0)
 
 (defun esp_now_init(){
@@ -115,7 +116,6 @@
      (bufset-i8 data_send 7 ppm_status); send the ppm status
      (bufset-i8 data_send 8 uart_status); send the uart status
 
-     (setq vt_throttle_mid current_throttle)
      (esp-now-send peer data_send)
      (free data_send)
      (setq vt_throttle_final current_throttle)
