@@ -1,4 +1,3 @@
-
 (def last_update_throttle 0.0)
 (def throttle_time_out 0.0)
 (def throttle_status 0) ; 0 for inhibited 1 for active
@@ -59,10 +58,13 @@
         })
 
         (setq vt_throttle_start throttle)
-    (sleep 0.05);
+
+        (data_send)
+        
+        (sleep 0.01) ; Reduced from 0.02 to 0.01 for improved performance (may undo later if unnecessary)
     })
 })
 
 (defun throttle_init(){
-     (spawn 50 throttle_th)
+     (spawn 100 throttle_th)
 })
