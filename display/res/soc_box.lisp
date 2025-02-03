@@ -27,7 +27,8 @@
 @const-start
 (defun bat_soc (soc min max porc_volt rem_sk px py){
     (def soc_aux 0)
-    (setq soc (m-trunc soc min max))
+    (def display_soc soc)  ; Store original value for display
+    (setq soc (m-trunc soc min max))  ; Truncate for bar filling animation
     (setq prescaler (+ prescaler 1))
 
     (if(= porc_volt 0)
@@ -60,11 +61,11 @@
          (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n soc "%d%%"))
          (progn
              (if(and (= rem_sk 1)){
-                (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n (to-i (* soc 100)) "%03dV"))
+                (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n (to-i (* display_soc 100)) "%03dV"))
                 (txt-block-c bat_box 14 12 8 font_9x14  ".")
              }
              {
-                (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n (to-i (* soc 10)) "%03dV"))
+                (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n (to-i (* display_soc 10)) "%03dV"))
                 (txt-block-c bat_box 14 20 8 font_9x14  ".")
              })
          )
