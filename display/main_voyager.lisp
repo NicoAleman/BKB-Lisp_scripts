@@ -1,5 +1,5 @@
 ; includes
-(define lisp_V 1.1)
+(define lisp_V 1.20)
 (define THR_TIMEOUT 2.5) ; 5 for 160Mhz
 (def UNITS 0); 0--> imperial 1--> metric
 

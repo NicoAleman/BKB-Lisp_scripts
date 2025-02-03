@@ -28,16 +28,16 @@
         (disp-render text_box (+ x_offset 70) (+ y_offset 53) '(0 0xFFFFFF))
         (img-clear text_box)
 
-        (txt-block-l text_box 1 0 0  font_9x14 "Fw:")
-        (disp-render text_box (+ x_offset 50) (+ y_offset 12) '(0 0xFFFFFF))
-        (img-clear text_box)
+        ;; (txt-block-l text_box 1 0 0  font_9x14 "Fw:")
+        ;; (disp-render text_box (+ x_offset 50) (+ y_offset 12) '(0 0xFFFFFF))
+        ;; (img-clear text_box)
 
-        (txt-block-l text_box 1 0 0  font_9x14 "Hw:")
-        (disp-render text_box (+ x_offset 50) (+ y_offset 25) '(0 0xFFFFFF))
-        (img-clear text_box)
+        ;; (txt-block-l text_box 1 0 0  font_9x14 "Hw:")
+        ;; (disp-render text_box (+ x_offset 50) (+ y_offset 25) '(0 0xFFFFFF))
+        ;; (img-clear text_box)
 
         (txt-block-l text_box 1 0 0  font_9x14 "Lisp:")
-        (disp-render text_box (+ x_offset 32) (+ y_offset 38) '(0 0xFFFFFF))
+        (disp-render text_box (+ x_offset 32) (+ y_offset 25) '(0 0xFFFFFF))
         (img-clear text_box)
 
         (def numb_box (img-buffer 'indexed2 36 14))
@@ -51,16 +51,16 @@
             (disp-render text_box (+ x_offset 1) (+ y_offset -1) '(0 0xFFFFFF))
             (img-clear text_box)
 
-            (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n rem_fw "%.2f")) ; firmware version
-            (disp-render numb_box (+ x_offset 77) (+ y_offset 12) '(0 0xFFFFFF))
-            (img-clear numb_box)
+            ;; (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n rem_fw "%.2f")) ; firmware version
+            ;; (disp-render numb_box (+ x_offset 77) (+ y_offset 12) '(0 0xFFFFFF))
+            ;; (img-clear numb_box)
 
-            (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n rem_hw "%.2f")) ; hardware version
-            (disp-render numb_box (+ x_offset 77) (+ y_offset 25) '(0 0xFFFFFF))
-            (img-clear numb_box)
+            ;; (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n rem_hw "%.2f")) ; hardware version
+            ;; (disp-render numb_box (+ x_offset 77) (+ y_offset 25) '(0 0xFFFFFF))
+            ;; (img-clear numb_box)
 
             (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n Lisp_V "%.2f")) ; lisp version
-            (disp-render numb_box (+ x_offset 77) (+ y_offset 38) '(0 0xFFFFFF))
+            (disp-render numb_box (+ x_offset 77) (+ y_offset 25) '(0 0xFFFFFF))
             (img-clear numb_box)
 
         ))
@@ -69,38 +69,38 @@
             (disp-render text_box (+ x_offset 1) (+ y_offset -1) '(0 0xFFFFFF))
             (img-clear text_box)
 
-            (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n rec_fw "%.2f")) ; firmware version
-            (disp-render numb_box (+ x_offset 77) (+ y_offset 12) '(0 0xFFFFFF))
-            (img-clear numb_box)
+            ;; (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n (+ rec_fw_may (* rec_fw_min 0.01)) "%.2f")) ; firmware version
+            ;; (disp-render numb_box (+ x_offset 77) (+ y_offset 12) '(0 0xFFFFFF))
+            ;; (img-clear numb_box)
 
-            (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n rem_hw "%.2f")) ; hardware version
+            ;; (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n rec_hw "%.2f")) ; hardware version
+            ;; (disp-render numb_box (+ x_offset 77) (+ y_offset 25) '(0 0xFFFFFF))
+            ;; (img-clear numb_box)
+
+            (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n (+ rec_lisp_may (* rec_lisp_min 0.01)) "%.2f")) ; lisp version
             (disp-render numb_box (+ x_offset 77) (+ y_offset 25) '(0 0xFFFFFF))
             (img-clear numb_box)
 
-            (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n rec_lisp "%.2f")) ; lisp version
-            (disp-render numb_box (+ x_offset 77) (+ y_offset 38) '(0 0xFFFFFF))
-            (img-clear numb_box)
-
         ))
+        ;; ((eq info_screen_num 2) (progn
+        ;;     (txt-block-l text_box 1 0 0  font_9x14 "Skate")
+        ;;     (disp-render text_box (+ x_offset 1) (+ y_offset -1) '(0 0xFFFFFF))
+        ;;     (img-clear text_box)
+
+        ;;     (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n (+ skate_fw_may (* skate_fw_min 0.01)) "%.2f")) ; firmware version
+        ;;     (disp-render numb_box (+ x_offset 77) (+ y_offset 12) '(0 0xFFFFFF))
+        ;;     (img-clear numb_box)
+
+        ;;     (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n sk_hw "%.2f")) ; hardware version
+        ;;     (disp-render numb_box (+ x_offset 77) (+ y_offset 25) '(0 0xFFFFFF))
+        ;;     (img-clear numb_box)
+
+        ;;     (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n sk_lisp "%.2f")) ; lisp version
+        ;;     (disp-render numb_box (+ x_offset 77) (+ y_offset 38) '(0 0xFFFFFF))
+        ;;     (img-clear numb_box)
+
+        ;; ))
         ((eq info_screen_num 2) (progn
-            (txt-block-l text_box 1 0 0  font_9x14 "Skate")
-            (disp-render text_box (+ x_offset 1) (+ y_offset -1) '(0 0xFFFFFF))
-            (img-clear text_box)
-
-            (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n sk_fw "%.2f")) ; hardware version
-            (disp-render numb_box (+ x_offset 77) (+ y_offset 12) '(0 0xFFFFFF))
-            (img-clear numb_box)
-
-            (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n sk_hw "%.2f")) ; firmware version
-            (disp-render numb_box (+ x_offset 77) (+ y_offset 25) '(0 0xFFFFFF))
-            (img-clear numb_box)
-
-            (txt-block-l numb_box 1 0 0  font_9x14 (str-from-n sk_lisp "%.2f")) ; lisp version
-            (disp-render numb_box (+ x_offset 77) (+ y_offset 38) '(0 0xFFFFFF))
-            (img-clear numb_box)
-
-        ))
-        ((eq info_screen_num 3) (progn
             (if (= iteration_data 0) {
                 (disp-clear)
                 (setq iteration_data 1)
@@ -148,7 +148,7 @@
         (if (= cfg_pressed_short 1){
             (setq cfg_pressed_short 0)
             (setq info_screen_num (+ info_screen_num 1))
-            (if (> info_screen_num 3){
+            (if (> info_screen_num 2){
                 (setq info_screen_num 0)
                 (setq iteration_data 0)
                 (setq firts_iteration_info 0)
