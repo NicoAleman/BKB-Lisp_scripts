@@ -16,9 +16,12 @@
 ;; Filter coefficient (0.0 to 1.0)
 ;; Higher values = less filtering but lower latency
 ;; Lower values = more filtering but higher latency
-(def NOISE_THRESHOLD 0.10)  ; Scale from Small Alpha to Large Alpha as rate of change approaches this threshold
+(def NOISE_THRESHOLD 0.10)    ; Scale from Small Alpha to Large Alpha as rate of change approaches this threshold
 (def SMALL_CHANGE_ALPHA 0.1)  ; heavy filtering for noise / small changes
 (def LARGE_CHANGE_ALPHA 1.0)  ; very light filtering for real, rapid movements
+
+(def data_send_prescaler 0) 
+(def DATA_SEND_INTERVAL 2)    ; 50Hz (Assuming 100Hz / 0.01s throttle loop)
 
 (defun throttle_th(){
     (loopwhile t{
@@ -95,9 +98,13 @@
         (setq vt_throttle_raw raw_throttle)
         (setq vt_throttle_filtered throttle)
 
-        (data_send)
+        ;; Send data at prescribed interval
+        (setq data_send_prescaler (+ data_send_prescaler 1))
+        (if (= (mod data_send_prescaler DATA_SEND_INTERVAL) 0)
+            (data_send)
+        )
         
-        (sleep 0.01) ; Reduced from 0.02 to 0.01 for improved performance (may undo later if unnecessary)
+        (sleep 0.01) ; Maintain faster refresh rate for more effective noise filtering
     })
 })
 

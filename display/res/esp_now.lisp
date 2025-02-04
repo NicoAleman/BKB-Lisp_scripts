@@ -44,6 +44,8 @@
 (def vt_throttle_data 0.0)
 (def vt_throttle_final 0.0)
 
+(def data_send_buffer (bufcreate 11)) ; Create once and reuse
+
 (defun esp_now_init(){
     (esp-now-start)
     (esp-now-add-peer peer) ; add here the mac for the receiver, keep in mind this when pairing mode
@@ -105,32 +107,27 @@
 
 
 (defun data_send() {
-     (var data_send (bufcreate 11))
      (var current_throttle throttle)
 
      (setq vt_throttle_data current_throttle)
-     (bufset-f32 data_send 0 throttle      'little-endian); throttle
-     (bufset-i8 data_send 4 direction     ); direction
-     (bufset-i8 data_send 5 torq_mode     ); torque mode
-     (bufset-i8 data_send 6 pairing_key_T)
-     (bufset-i8 data_send 7 ppm_status); send the ppm status
-     (bufset-i8 data_send 8 uart_status); send the uart status
-     (bufset-i8 data_send 9 return_analog); current button state (CFG Button + Thumb Button)
+     (bufset-f32 data_send_buffer 0 throttle      'little-endian) ; throttle
+     (bufset-i8 data_send_buffer 4 direction     ) ; direction
+     (bufset-i8 data_send_buffer 5 torq_mode     ) ; torque mode
+     (bufset-i8 data_send_buffer 6 pairing_key_T)
+     (bufset-i8 data_send_buffer 7 ppm_status) ; send the ppm status
+     (bufset-i8 data_send_buffer 8 uart_status) ; send the uart status
+     (bufset-i8 data_send_buffer 9 return_analog) ; current button state
 
-     (esp-now-send peer data_send)
-     (free data_send)
+     (esp-now-send peer data_send_buffer)
      (setq vt_throttle_final current_throttle)
 
-     (if (= batt_saver 1){
-        (if (= menu_index 0){
-            (gpio-hold 20 1) ; latch the gpio_pin_20 before enter in light sleep mode
-            (gpio-hold-deepsleep 1)
-            (sleep-light sleep_time)   ;turn off the radio(wifi,bt), enter in light sleep mode.
-            (sleep 0.01)
-            (wifi-start)
-            (gpio-hold 20 0)
-            (gpio-hold-deepsleep 0)
-
-         })
+     ; Always use light sleep between transmissions
+     (if (= menu_index 0) {
+         (gpio-hold 20 1) ; latch the gpio_pin_20 before light sleep
+         (gpio-hold-deepsleep 1)
+         (sleep-light 0.02) ; Very short light sleep to save power (match refresh rate based on data_send_prescaler)
+         (wifi-start)
+         (gpio-hold 20 0)
+         (gpio-hold-deepsleep 0)
      })
 })
