@@ -177,11 +177,6 @@
     (setq button_state (bufget-i8  data 9)) ; (0 = None, 1 = CFG, 2 = Thumb, 3 = Both)
 
     (setq scaled_throttle (scale_throttle throttle throttle_scale))
-    
-    (setq throttle_ppm (utils_map scaled_throttle -1.0 1.0 0.0 1.0))
-    (utils_truncate throttle_ppm 0.1 0.97) ; truncate the values for the throttle ppm
-    ;(ppm_scale_range throttle_scale) ;; Temporarily remove Throttle Scale modes. If uncommented, comment above truncate line
-    (setq throttle_dead_band (dead_band throttle 0.2 1.0))
 
     (if (eq uart_status 1) {
         (if (= is_uart_start 0) {
@@ -219,6 +214,9 @@
             (setq is_ppm_start 1)
             (eeprom-store-i 7 ppm_status)
          })
+        (setq throttle_ppm (utils_map scaled_throttle -1.0 1.0 0.0 1.0))
+        (utils_truncate throttle_ppm 0.1 0.97) ; truncate the values for the throttle ppm
+
         (pwm-set-duty throttle_ppm 0);
         (setq no_app_config 0.0)
     })
