@@ -7,6 +7,11 @@
 
        (if (= km_mi 0)
             (setq dist (* dist 0.6213)))
+       
+       ;; Handle small negative values
+       (if (and (< dist 0) (> dist -0.1))
+           (setq dist 0.0))
+
        (txt-block-l trip_box 1 0 0 font_9x14 
            (str-from-n dist 
                (if (= km_mi 0)

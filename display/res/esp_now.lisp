@@ -121,15 +121,15 @@
      (esp-now-send peer data_send_buffer)
      (setq vt_throttle_final current_throttle)
 
-     ; Always use light sleep between transmissions
-     (if (= batt_saver 1){
-        (if (= menu_index 0) {
-            ;;  (gpio-hold 20 1) ; latch the gpio_pin_20 before light sleep
-            ;;  (gpio-hold-deepsleep 1)
-            (sleep-light 0.02) ; Very short light sleep to save power
-            (wifi-start)
-            ;;  (gpio-hold 20 0)
-            ;;  (gpio-hold-deepsleep 0)
-        })
-     })
+    ;;  ; Not convinced that this helps, disabling for now
+    ;;  (if (= batt_saver 1){
+    ;;     (if (= menu_index 0) {
+    ;;         ;;  (gpio-hold 20 1) ; latch the gpio_pin_20 before light sleep
+    ;;         ;;  (gpio-hold-deepsleep 1)
+    ;;         (sleep-light 0.02) ; Very short light sleep to save power
+    ;;         (wifi-start)
+    ;;         ;;  (gpio-hold 20 0)
+    ;;         ;;  (gpio-hold-deepsleep 0)
+    ;;     })
+    ;;  })
 })
