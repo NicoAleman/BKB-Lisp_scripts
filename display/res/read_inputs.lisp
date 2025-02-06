@@ -137,8 +137,25 @@
     })           
 })
 
+(def last_soc_value 0.0)
+(def first_soc_read 1)  ; Flag for first reading
+
 (defun read_SOC(){
-    (/ (get-adc 3) 0.4) ; TODO implement low pass filter
+    (def new_soc (/ (get-adc 3) 0.4))
+    
+    ; On first read, initialize last_soc_value
+    (if (= first_soc_read 1)
+        (progn 
+            (setq last_soc_value new_soc)
+            (setq first_soc_read 0)
+        )
+    )
+    
+    ; Apply EMA filter: 95% old + 5% new
+    (setq last_soc_value (+ (* 0.95 last_soc_value) 
+                           (* 0.05 new_soc)))
+    
+    last_soc_value
 })
 @const-end
 (def charging)

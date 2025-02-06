@@ -201,6 +201,7 @@
     (if (= on_pressed_short 1){
         (setq on_pressed_short 0)
         (setq cfg_pressed_long 0)
+        (setq first_draw 1)
         (disp-clear)
         (setq firts_iteration 0)
         (setq menu_sub_index 0)
