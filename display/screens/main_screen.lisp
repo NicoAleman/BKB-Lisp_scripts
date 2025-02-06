@@ -58,11 +58,11 @@
 
     ;; REMOTE SOC ;;
     (def current_soc (read_SOC))
-    (def current_display_soc (to-i (* current_soc 100)))  ; For comparing displayed values
+    (def current_display_soc (to-i current_soc))  ; For comparing displayed values
 
     ; Update when: first draw, display value changed, or charging
     (if (or (!= current_display_soc last_displayed_soc)
-            (= (isCharging) 1)
+            (= last_charging_state 1)
             (= first_draw 1))
         (progn
             (bat_soc current_soc 1 (+ x_offset 85) (+ y_offset 0))

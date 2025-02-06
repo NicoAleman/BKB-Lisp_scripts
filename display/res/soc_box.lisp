@@ -18,21 +18,6 @@
 (/ (* (- x in_min) (- out_max out_min)) (+ (- in_max in_min) out_min))
 )
 
-;; Piecewise function to map remote voltage to percentage, based on observed discharge curve
-(defun rem_voltage_to_percentage (voltage)
-    (cond
-        ((> voltage 4.03) 
-            (+ (/ 1 (- 3.98 voltage)) 105))
-        ((> voltage 3.95)
-            (* 370 (- voltage 3.8)))
-        ((> voltage 3.78)
-            (* 221 (- voltage 3.70)))
-        ((> voltage 3.5)
-            (- (* 800 (pow (- voltage 3.25) 6)) 0.5))
-        (t 0) ; Return 0% for voltages <= 3.5V
-    )
-)
-
 @const-end
 (def bar_val 0)
 (def bar_val_aux 0)
@@ -42,24 +27,14 @@
     (def soc_aux 0)
     (def display_soc soc)  ; Store original value for display
 
-    (def max 4.2) ; LiPo Max
-    (def min 3.6) ; LiPo Min
-
-    ; Convert voltage to percentage when rem_sk is 1
-    (if (= rem_sk 1)
-        (progn
-            (setq display_soc (rem_voltage_to_percentage soc))  ; Use new piecewise function
-            (setq display_soc (m-trunc display_soc 0 100))  ; Ensure percentage stays within 0-100
-            (setq soc display_soc)  ; Use percentage for bar filling too
-            (setq min 0)  ; Set min/max to percentage range
-            (setq max 100)
-        )
-        (progn
-            (setq min (* batt_type_config 3.0)) ; Empty at 3V / Cell
-            (setq max (* batt_type_config 4.2)) ; Full at 4.2V / Cell
-        )
-
-    )
+    ; Set min/max based on display type
+    (def min (if (= rem_sk 1) 
+                  0                          ; Remote: 0%
+                  (* batt_type_config 3.0))) ; Board: 3.0V per cell
+                  
+    (def max (if (= rem_sk 1)
+                  100                        ; Remote: 100%
+                  (* batt_type_config 4.2))) ; Board: 4.2V per cell
     
 
     (setq soc (m-trunc soc min max))  ; Truncate for bar filling animation

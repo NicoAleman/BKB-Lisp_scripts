@@ -140,6 +140,21 @@
 (def last_soc_value 0.0)
 (def first_soc_read 1)  ; Flag for first reading
 
+;; Piecewise function to map remote voltage to percentage, based on observed discharge curve
+(defun rem_voltage_to_percentage (voltage)
+    (cond
+        ((> voltage 4.03) 
+            (+ (/ 1 (- 3.98 voltage)) 105))
+        ((> voltage 3.95)
+            (* 370 (- voltage 3.8)))
+        ((> voltage 3.78)
+            (* 221 (- voltage 3.70)))
+        ((> voltage 3.5)
+            (- (* 800 (pow (- voltage 3.25) 6)) 0.5))
+        (t 0) ; Return 0% for voltages <= 3.5V
+    )
+)
+
 (defun read_SOC(){
     (def new_soc (/ (get-adc 3) 0.4))
     
@@ -155,7 +170,9 @@
     (setq last_soc_value (+ (* 0.95 last_soc_value) 
                            (* 0.05 new_soc)))
     
-    last_soc_value
+    ; Convert voltage to percentage before returning
+    (def percentage (rem_voltage_to_percentage last_soc_value))
+    (m-trunc percentage 0 100)  ; Ensure it stays within 0-100 range
 })
 @const-end
 (def charging)
