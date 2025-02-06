@@ -2,12 +2,9 @@
 ;Parameters
 ; soc -> state of charge, float
 ; min -> min batt level for alarm, when it's below that value the drawing turns red
-; porc_volt -> 1 porcentage 0 volts
+; rem_sk -> 1 remote 0 esk8
 ; max -> how many volts are the max, if percentage is displayed this parameter is 100
 ; min -> px py position, pixel
-
-(def vin_min 10.0)
-(def vin_max 13.0)
 
 @const-start
 (defun m-trunc (v min max)
@@ -25,16 +22,35 @@
 (def bar_val_aux 0)
 (def prescaler 0)
 @const-start
-(defun bat_soc (soc min max porc_volt rem_sk px py){
+(defun bat_soc (soc rem_sk px py){
     (def soc_aux 0)
     (def display_soc soc)  ; Store original value for display
+
+    (def max 4.2) ; LiPo Max
+    (def min 3.6) ; LiPo Min
+
+    ; Convert voltage to percentage when rem_sk is 1
+    (if (= rem_sk 1)
+        (progn
+            (setq display_soc (utils_map soc min max 0 100))  ; Map voltage to 0-100%
+            (setq display_soc (m-trunc display_soc 0 100))    ; Ensure percentage stays within 0-100
+            (setq soc display_soc)  ; Use percentage for bar filling too
+            (setq min 0)  ; Set min/max to percentage range
+            (setq max 100)
+        )
+        (progn
+            (setq min (* batt_type_config 3.0)) ; Empty at 3V / Cell
+            (setq max (* batt_type_config 4.2)) ; Full at 4.2V / Cell
+        )
+
+    )
+    
+
     (setq soc (m-trunc soc min max))  ; Truncate for bar filling animation
     (setq prescaler (+ prescaler 1))
 
-    (if(= porc_volt 0)
-        (setq bar_val (utils_map (* soc 10) (* min 10) (* max 10) 1 39))
-        (setq bar_val (utils_map soc min max 1 39))
-    )
+    ; Bar filling now uses same scale for both voltage and percentage
+    (setq bar_val (utils_map soc min max 1 39))
 
     (def bar_col 0)
     (setq bar_col (utils_map soc min max 1 15))
@@ -57,18 +73,20 @@
     (img-rectangle bat_box 2 2 bar_val 11 bar_col '(filled))
     (img-line bat_box 39 14 39 14 15)     ; missing point in the rectangle
     (img-line bat_box 38 1 38 12 0)       ; prevent map error
-    (if (= porc_volt 1)
-         (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n soc "%d%%"))
-         (progn
-             (if(and (= rem_sk 1)){
-                (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n (to-i (* display_soc 100)) "%03dV"))
-                (txt-block-c bat_box 14 12 8 font_9x14  ".")
-             }
-             {
-                (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n (to-i (* display_soc 10)) "%03dV"))
-                (txt-block-c bat_box 14 20 8 font_9x14  ".")
-             })
-         )
+    (if (= rem_sk 1)
+        (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n (to-i display_soc) "%d%%"))
+        (progn
+            (if (= rem_sk 1)
+                (progn
+                    (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n (to-i (* display_soc 100)) "%03dV"))
+                    (txt-block-c bat_box 14 12 8 font_9x14  ".")
+                )
+                (progn
+                    (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n (to-i (* display_soc 10)) "%03dV"))
+                    (txt-block-c bat_box 14 20 8 font_9x14  ".")
+                )
+            )
+        )
     )
     (disp-render bat_box px py '(0 0xFF0000 0xFF6000 0xFFFF00 0xE0FF00 0xD9FF00 0xBAFF00 0x9BFF00 0x70FF00 0x7CFF00 0x5DFF00 0x3EFF00  0x1FFF00 0x00FF00 0x0000FF 0xFFFFFF))
 

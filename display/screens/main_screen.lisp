@@ -65,7 +65,7 @@
             (= (isCharging) 1)
             (= first_draw 1))
         (progn
-            (bat_soc current_soc 2.5 4.25 0 1 (+ x_offset 85) (+ y_offset 0))
+            (bat_soc current_soc 1 (+ x_offset 85) (+ y_offset 0))
             (setq last_displayed_soc current_display_soc)
         )
     )
@@ -73,15 +73,13 @@
     ;; ;;;;;;;;;; ;;
 
     ;; BOARD SOC ;;
-    (setq vin_min (* batt_type_config 3.0))
-    (setq vin_max (* batt_type_config 4.2))
     (def current_board_soc (to-i (* vin 100)))  ; For comparing displayed values
 
     ; Update when: first draw or displayed value changed
     (if (or (!= current_board_soc last_board_soc)
             (= first_draw 1))
         (progn
-            (bat_soc vin vin_min vin_max 0 0 (+ x_offset 8) (+ y_offset 0))
+            (bat_soc vin 0 (+ x_offset 8) (+ y_offset 0))
             (setq last_board_soc current_board_soc)
         )
     )
