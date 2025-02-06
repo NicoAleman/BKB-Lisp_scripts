@@ -50,7 +50,7 @@
 (def rec_fw_may      1)
 (def rec_fw_min      0)
 (def rec_lisp_may    1)
-(def rec_lisp_min    21)
+(def rec_lisp_min    30)
 (def skate_fw_may    0)
 (def skate_fw_min    0)
 (def time            0.0)
