@@ -76,6 +76,10 @@
 ; display initialization
 (display_init)
 
+(def last_screen_update 0)
+(def time_since_screen_update 0)
+(def SCREEN_REFRESH_INTERVAL 100) ; 100ms = 10Hz
+
 (def direction 1)
 (def menu_index 0)
 (def main_prescaler 0)
@@ -145,6 +149,13 @@
         })
 
         (setq sleep_time data_rate)
+
+        ; Sleep if not enough time has passed (elapsed time is less than our interval)
+        (setq last_screen_update (systime))
+        (setq time_since_screen_update (- (systime) last_screen_update))
+        (if (and (eq menu_index 0) (> SCREEN_REFRESH_INTERVAL time_since_screen_update))
+            (sleep (/ (- SCREEN_REFRESH_INTERVAL time_since_screen_update) 1000.0))  ; Convert ms to seconds
+        )
     })
 })
 
