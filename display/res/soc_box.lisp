@@ -17,6 +17,22 @@
 (defun utils_map(x in_min in_max out_min out_max)
 (/ (* (- x in_min) (- out_max out_min)) (+ (- in_max in_min) out_min))
 )
+
+;; Piecewise function to map remote voltage to percentage, based on observed discharge curve
+(defun rem_voltage_to_percentage (voltage)
+    (cond
+        ((> voltage 4.03) 
+            (+ (/ 1 (- 3.98 voltage)) 105))
+        ((> voltage 3.95)
+            (* 370 (- voltage 3.8)))
+        ((> voltage 3.78)
+            (* 221 (- voltage 3.70)))
+        ((> voltage 3.5)
+            (- (* 800 (pow (- voltage 3.25) 6)) 0.5))
+        (t 0) ; Return 0% for voltages <= 3.5V
+    )
+)
+
 @const-end
 (def bar_val 0)
 (def bar_val_aux 0)
@@ -32,8 +48,8 @@
     ; Convert voltage to percentage when rem_sk is 1
     (if (= rem_sk 1)
         (progn
-            (setq display_soc (utils_map soc min max 0 100))  ; Map voltage to 0-100%
-            (setq display_soc (m-trunc display_soc 0 100))    ; Ensure percentage stays within 0-100
+            (setq display_soc (rem_voltage_to_percentage soc))  ; Use new piecewise function
+            (setq display_soc (m-trunc display_soc 0 100))  ; Ensure percentage stays within 0-100
             (setq soc display_soc)  ; Use percentage for bar filling too
             (setq min 0)  ; Set min/max to percentage range
             (setq max 100)
