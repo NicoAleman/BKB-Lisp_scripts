@@ -317,40 +317,43 @@
     (setq signal_level rssi)
     (setq pairing_key  (bufget-i8 data 6))
 
-    (if (= (buflen data) 9) { ; This is a pairing buffer
-        (setq cont (+ cont 1))
-        
-        (if (= cont 9) {
-            (print "listening")
-            (if (and (= pairing_key 64)(> signal_level -80)) {
-                ; Store MAC address
-                (eeprom-store-i 0 (ix src 0))
-                (eeprom-store-i 1 (ix src 1))
-                (eeprom-store-i 2 (ix src 2))
-                (eeprom-store-i 3 (ix src 3))
-                (eeprom-store-i 4 (ix src 4))
-                (eeprom-store-i 5 (ix src 5))
-
-                (eeprom-set-mac)
-                (setq mac-tx (list mac_0 mac_1 mac_2 mac_3 mac_4 mac_5))
-                (print mac-tx)
-            } {
-                (eeprom-set-mac)
-                (setq mac-tx (list mac_0 mac_1 mac_2 mac_3 mac_4 mac_5))
-                (print "use default mac")
-                (print mac-tx)
-                (setq cont 0)
-            })
-        })
-    } { ; This is a regular data buffer (Typically buflen data = 11)
-        (if (eq src mac-tx) {
-            (setq is_data_received 1.0)
-            (data-received data)
-        })
+    (if (eq src mac-tx) {
+        ;(print (list "src:" src  "des:" des "data:" data "rssi:" rssi))
+        (setq is_data_received 1.0); to ensure when a data is received the ESP start sending
+        (data-received data)
     })
-    
+
+    (setq cont (+ cont 1))
+
+    (if (= cont 9) {
+        (print "listening")
+     (if (and (= pairing_key 64)(> signal_level -80)) {
+
+        (eeprom-store-i 0 (ix src 0))
+        (eeprom-store-i 1 (ix src 1))
+        (eeprom-store-i 2 (ix src 2))
+        (eeprom-store-i 3 (ix src 3))
+        (eeprom-store-i 4 (ix src 4))
+        (eeprom-store-i 5 (ix src 5))
+
+        (eeprom-set-mac)
+        (setq mac-tx (list mac_0 mac_1 mac_2 mac_3 mac_4 mac_5)) ; desired mac for pairing
+        (print mac-tx)
+    }
+
+    { (eeprom-set-mac)    ; load a default mac address when time pairing is finished
+      (setq mac-tx (list mac_0 mac_1 mac_2 mac_3 mac_4 mac_5)) ;
+      (print "use default mac")
+      (print mac-tx)
+      (setq cont 0)
+    }
+   )
+  }
+ )
+    ;(print mac-tx)
     (esp-now-add-peer mac-tx)
-})
+ }
+)
 
 (defun event-handler ()
     (loopwhile t
