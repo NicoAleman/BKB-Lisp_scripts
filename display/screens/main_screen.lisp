@@ -110,7 +110,7 @@
     ;; ;;;;; ;;
 
     ;; TRIP ;;
-    (def current_trip (if (= UNITS 1) (distance) (* distance 0.621)))
+    (def current_trip (if (= UNITS 1) distance (* distance 0.621)))
 
     (def current_display_trip (to-i (* current_trip 10)))  ; For comparing displayed values
     (if (or (!= current_display_trip last_displayed_trip)

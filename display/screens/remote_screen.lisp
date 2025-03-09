@@ -81,7 +81,7 @@
             (disp-render text_box (+ x_offset 1) (+ y_offset -1) '(0 0xFFFFFF))
             (img-clear text_box)
             (setq distance_total (to-float (eeprom-read-f total_trip_add)))
-            (setq distance_total (+ distance_total (/ distance 1000)))
+            (setq distance_total (+ distance_total (if (= distance 0) 0 (/ distance 1000))))
             (if (= UNITS 1)
             { 
                 (txt-block-c numb_box 1 60 0  font_20x30 (str-from-n distance_total "%0.1f"));
