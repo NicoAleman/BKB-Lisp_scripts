@@ -8,7 +8,7 @@
 (defun off_sequence(){
     
     (setq temp_trip (eeprom-read-f total_trip_add))
-    (setq temp_trip (+ temp_trip (/ distance 1000)))
+    (setq temp_trip (+ temp_trip (if (= distance 0) 0 (/ distance 1000))))
 
     (eeprom-store-f total_trip_add (to-float temp_trip)) ; store the total trip in Km;
 
