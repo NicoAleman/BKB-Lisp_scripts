@@ -169,6 +169,10 @@
     ; Apply EMA filter: 95% old + 5% new
     (setq last_soc_value (+ (* 0.95 last_soc_value) 
                            (* 0.05 new_soc)))
+
+    (if(< last_soc_value 3.4)
+        (off_sequence)
+    )
     
     ; Convert voltage to percentage before returning
     (def percentage (rem_voltage_to_percentage last_soc_value))
