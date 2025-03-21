@@ -108,9 +108,13 @@
 
 (defun data_send() {
      (var current_throttle throttle)
+     (var throttle_to_send throttle)
+     (if (= (isCharging) 1)
+        (setq throttle_to_send 0.0)
+     )
 
      (setq vt_throttle_data current_throttle)
-     (bufset-f32 data_send_buffer 0 throttle      'little-endian) ; throttle
+     (bufset-f32 data_send_buffer 0 throttle_to_send    'little-endian) ; throttle
      (bufset-i8 data_send_buffer 4 direction     ) ; direction
      (bufset-i8 data_send_buffer 5 torq_mode     ) ; torque mode
      (bufset-i8 data_send_buffer 6 pairing_key_T)
