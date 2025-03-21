@@ -111,9 +111,33 @@
 (setq safety_status (to-i (eeprom-read-i safety_status_add))) ; load the safety status for throttle
 
 (esp_now_init)
+
+(def idle_start_time 0)  ; Track when idle period started (in ms)
+(def is_idle 0)          ; Track if we're currently idle
+(def vt_idle_time 0)     ; Track idle duration so far (in seconds)
+
 ; display thread
 (defun display_th(){
     (loopwhile t {
+        ; IDLE TIMEOUT (Shutoff Condition)
+        (if (and (< (speed_cal) 5)
+                 (or (and (> (get-adc 0) 1.65) (< (get-adc 0) 1.95))
+                     (and (> throttle -0.1) (< throttle 0.1))))
+            (progn
+                (if (= is_idle 0) {
+                    (setq idle_start_time (systime))
+                    (setq is_idle 1)
+                })
+                (setq vt_idle_time (/ (- (systime) idle_start_time) 1000.0))
+                (if (> vt_idle_time 300) {  ; 300 seconds = 5 minutes
+                    (off_sequence)
+                }))
+            (progn 
+                (setq is_idle 0)  ; Reset idle tracking if conditions not met
+                (setq vt_idle_time 0)
+            )
+        )
+
         ;; (setq main_prescaler (+ main_prescaler 1))
         (cond 
             ((eq menu_index 0) (progn 
