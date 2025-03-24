@@ -194,5 +194,5 @@
 })
 
 ; spawn threads
-(spawn 100 display_th)
+(spawn 200 display_th)
 (spawn 50 inputs_th)
