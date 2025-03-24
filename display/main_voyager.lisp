@@ -1,5 +1,5 @@
 ; includes
-(define lisp_V 1.32)
+(define lisp_V 1.33)
 (define THR_TIMEOUT 2.5) ; 5 for 160Mhz
 (def UNITS 0); 0--> imperial 1--> metric
 
@@ -115,14 +115,18 @@
 (def idle_start_time 0)  ; Track when idle period started (in ms)
 (def is_idle 0)          ; Track if we're currently idle
 (def vt_idle_time 0)     ; Track idle duration so far (in seconds)
+(def vt_adc 0.0)         ; Track ADC value (for help with idle timeout)
 
 ; display thread
 (defun display_th(){
     (loopwhile t {
         ; IDLE TIMEOUT (Shutoff Condition)
+        (setq vt_adc (get-adc 0))
         (if (and (< (speed_cal) 5)
-                 (or (and (> (get-adc 0) 1.65) (< (get-adc 0) 1.95))
-                     (and (> throttle -0.1) (< throttle 0.1))))
+                 (if (= menu_index 0)
+                     (or (and (> vt_adc 1.65) (< vt_adc 1.95))
+                         (and (> throttle -0.1) (< throttle 0.1)))
+                     (and (> vt_adc 1.65) (< vt_adc 1.95))))
             (progn
                 (if (= is_idle 0) {
                     (setq idle_start_time (systime))
