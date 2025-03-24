@@ -1,6 +1,5 @@
-
 (defun utils_map(x in_min in_max out_min out_max)
-(/ (* (- x in_min) (- out_max out_min)) (+ (- in_max in_min) out_min))
+    (/ (* (- x in_min) (- out_max out_min)) (+ (- in_max in_min) out_min))
 )
 
 (defun draw_calib (bar_val mid_val px py){
@@ -19,6 +18,9 @@
 
 })
 
+(defun is_valid_calibration(min mid max)
+    (and (> (- max mid) 500) (> (- mid min) 500))
+)
 
 (def thum_stick_adc 2048)
 (def thum_min 4096)
@@ -27,21 +29,15 @@
 (def exit 1)
 (def aux_adc 0)
 (def firts_iteration_cal 0)
+(def save_text_visible nil)
 
 (defun calib_screen (){
     (if (= firts_iteration_cal 0){
         (def text_box (img-buffer 'indexed2 127 14))
-        (txt-block-l text_box 1 0 0  font_9x14 "Hold SAVE 2sec")
-        (disp-render text_box (+ x_offset 1) (+ y_offset 35) '(0 0xFFFFFF))
-
+        
         (def text_box (img-buffer 'indexed2 36 14))
-
         (txt-block-l text_box 1 0 0  font_9x14 "EXIT")
         (disp-render text_box (+ x_offset 1) (+ y_offset 49) '(0 0xFFFFFF))
-        (img-clear text_box)
-
-        (txt-block-l text_box 1 0 0  font_9x14 "SAVE")
-        (disp-render text_box (+ x_offset 90) (+ y_offset 49) '(0 0xFFFFFF))
         (img-clear text_box)
 
         (setq thum_mid (to-i (get-adc-raw)))
@@ -50,7 +46,35 @@
         (img-clear text_box)
 
         (setq firts_iteration_cal 1)
-     })
+        (setq save_text_visible nil)
+    })
+
+    ; Check if visibility state should change
+    (if (and (not save_text_visible) (is_valid_calibration thum_min thum_mid thum_max))
+        (progn
+            (setq save_text_visible t)
+            (def text_box (img-buffer 'indexed2 127 14))
+            
+            ; Render "Hold SAVE 2sec" if now valid
+            (if save_text_visible
+                (progn
+                    (txt-block-l text_box 1 0 0  font_9x14 "Hold SAVE 2sec")
+                    (disp-render text_box (+ x_offset 1) (+ y_offset 35) '(0 0xFFFFFF))
+                )
+            )
+
+            (def text_box (img-buffer 'indexed2 36 14))
+            
+            ; Render "SAVE" if now valid
+            (if save_text_visible
+                (progn
+                    (txt-block-l text_box 1 0 0  font_9x14 "SAVE")
+                    (disp-render text_box (+ x_offset 90) (+ y_offset 49) '(0 0xFFFFFF))
+                )
+            )
+            (img-clear text_box)
+        )
+    )
 
      (setq aux_adc (get-adc-raw))
 
@@ -87,9 +111,13 @@
      (if (= cfg_pressed_long 1){
         (setq cfg_pressed_long 0)
         (setq cfg_pressed_short 0)
-        (eeprom-store-i min_cal_add thum_min)
-        (eeprom-store-i mid_cal_add thum_mid)
-        (eeprom-store-i max_cal_add thum_max)
+        (if (is_valid_calibration thum_min thum_mid thum_max)
+            (progn
+                (eeprom-store-i min_cal_add thum_min)
+                (eeprom-store-i mid_cal_add thum_mid)
+                (eeprom-store-i max_cal_add thum_max)
+            )
+        )
         (disp-clear)
         (setq firts_iteration 0)
         (setq menu_sub_index 0)
