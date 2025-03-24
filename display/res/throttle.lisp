@@ -1,6 +1,6 @@
 (def last_update_throttle 0.0)
 (def throttle_time_out 0.0)
-(def throttle_status 0) ; 0 for inhibited 1 for active
+(def vt_throttle_status 1) ; 0 for inhibited 1 for active
 (def throttle 0.0)
 (def raw_throttle 0.0)
 (def change 0.0)
@@ -46,39 +46,29 @@
 
         (setq vt_joy_Y joy_Y)
 
-        (if (and (= thum_pressed_short 1) (= menu_index 0)){
-            (setq thum_pressed_short 0)
-            (setq throttle_time_out THR_TIMEOUT);feed timeout
-        })
-        (if (and (= throttle_status 1) (> joy_Y (+ joy_mid 100))){
-            (setq throttle_time_out THR_TIMEOUT);feed timeout
-        })
+        ;; (setq throttle_time_out (- throttle_time_out (secs-since last_update_throttle)))
+        ;; (setq last_update_throttle (systime))
 
-        (setq throttle_time_out (- throttle_time_out (secs-since last_update_throttle)))
-        (setq last_update_throttle (systime))
+        ;; (if (not-eq menu_index 0)
+        ;;     (setq throttle_time_out 0)
+        ;; )
 
-        (if (not-eq menu_index 0)
-            (setq throttle_time_out 0)
-        )
+        ;; (if(<= throttle_time_out 0){
+        ;;     ;; (setq throttle_status safety_status) ; disable
+        ;;     (setq throttle_status 1) ;; Force Enable Throttle (Safety Switch Removed)
+        ;; }
+        ;; {
+        ;;     (setq throttle_status 1) ; enable
+        ;; })
 
-        (if(<= throttle_time_out 0){
-            ;; (setq throttle_status safety_status) ; disable
-            (setq throttle_status 1) ;; Force Enable Throttle (Safety Switch Removed)
-        }
-        {
-            (setq throttle_status 1) ; enable
-        })
-
-        (if(= throttle_status 1){
+        (if (or (= vt_throttle_status 1) (= safety_status 1)) {
             (if (> joy_Y joy_mid)
                 (setq raw_throttle (utils_map joy_Y joy_mid joy_max 0.0 1.0))
                 (setq raw_throttle (* (utils_map joy_Y joy_mid joy_min 0.0 1.0) -1))
             )
         }
         {
-            (if (<= joy_Y joy_mid)
-                (setq raw_throttle (* (utils_map joy_Y joy_mid joy_min 0.0 1.0) -1))
-            )
+            (setq raw_throttle 0.0)
         })
 
         (setq change (abs (- raw_throttle throttle)))

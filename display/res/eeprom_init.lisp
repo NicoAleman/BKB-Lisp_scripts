@@ -112,7 +112,7 @@
         (eeprom-store-i 19 18)
     })
     (setq test_value (to-i (eeprom-read-i 20))) ; safety status
-    (if(not-eq test_value 0){ ; Force Off (Onewheel-only)
+    (if(or (< test_value 0)(> test_value 1)){
         (print "eeprom 20 error (safety status), writing default: 0")
         (eeprom-store-i 20 0)
     })
@@ -136,13 +136,13 @@
             (eeprom-store-i 11 0)
             (eeprom-store-f 12 0.06); default data rate
             (eeprom-store-i 13 0) ; ppm status
-            (eeprom-store-i 14 0)
+            (eeprom-store-i 14 1) ; Battery Saver
             (eeprom-store-i 15 0)
             (eeprom-store-i 16 30) ; motor poles
             (eeprom-store-i 17 0.280) ; wheel diameter
             (eeprom-store-i 18 1.0) ; gear ratio
             (eeprom-store-i 19 18) ; s-count
-            (eeprom-store-i 20 0) ; Default Safety-Switch to Disabled
+            (eeprom-store-i 20 0) ; Safety Switch
             (eeprom-store-i 21 0)
             (eeprom-store-i 22 0)
             (eeprom-store-i 23 0)

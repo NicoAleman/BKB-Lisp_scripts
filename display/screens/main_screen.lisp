@@ -11,17 +11,19 @@
 (def last_displayed_speed 0.0)
 (def last_displayed_trip 0.0)
 
+(def last_speed_color 0)  ; Track last speed color used
+
 (def first_draw 1)  ; Flag for first drawing
 
 @const-start
 (defun draw_main_screen(){
     (setq last_screen_update (systime))
 
-    ;; ;; *EDIT - REMOVED GREEN COLOR FOR SAFETY SWITCH DISABLED*
-    ;; (if(= throttle_status 1)
-    ;;     (setq speed_color 2)
-    ;;     (setq speed_color 1)
-    ;; )
+    ;; Turn speed text color to green if safety switch is enabled
+    (if(and (= vt_throttle_status 0) (= safety_status 0))
+        (setq speed_color 2)
+        (setq speed_color 1)
+    )
 
     ;; THROTTLE SCALE ;;
     (if (or (!= torq_mode last_displayed_torq_mode)
@@ -101,10 +103,12 @@
 
     (def current_display_speed (to-i (* current_speed 10)))  ; For comparing displayed values
     (if (or (!= current_display_speed last_displayed_speed)
+            (!= speed_color last_speed_color)
             (= first_draw 1))
         (progn
             (write-speed current_speed UNITS (+ x_offset (if (= UNITS 1) 33 28)) (+ y_offset 19) speed_color)
             (setq last_displayed_speed current_display_speed)
+            (setq last_speed_color speed_color)
         )
     )
     ;; ;;;;; ;;

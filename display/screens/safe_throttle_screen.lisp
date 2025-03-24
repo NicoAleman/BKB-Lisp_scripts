@@ -54,7 +54,7 @@
        (setq cfg_pressed_long 0)
        (setq cfg_pressed_short 0)
        (eeprom-store-i safety_status_add safety_status)
-      ; (setq safety_status (to-i (eeprom-read-i safety_status_add)))
+       (setq safety_status (to-i (eeprom-read-i safety_status_add)))
        (disp-clear)
        (setq firts_iteration 0)
        (setq menu_sub_index 0)

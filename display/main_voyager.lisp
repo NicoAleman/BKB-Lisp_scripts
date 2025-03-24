@@ -1,5 +1,5 @@
 ; includes
-(define lisp_V 1.33)
+(define lisp_V 1.34)
 (define THR_TIMEOUT 2.5) ; 5 for 160Mhz
 (def UNITS 0); 0--> imperial 1--> metric
 
@@ -154,12 +154,18 @@
                 })
 
                 ; Handle torque mode change on short on button press
-                (if (and (= on_pressed_short 1) (< (get-adc-raw) (+ (eeprom-read-i min_cal_add) 80))) {
-                    (setq torq_mode (+ torq_mode 1))
-                    (if (> torq_mode 2)
-                        (setq torq_mode 0)
-                    )
-                    (eeprom-store-i torq_mode_add torq_mode)
+                (if (= on_pressed_short 1) {
+                    (if (< (get-adc-raw) (+ (eeprom-read-i min_cal_add) 80)) {
+                        (setq torq_mode (+ torq_mode 1))
+                        (if (> torq_mode 2)
+                            (setq torq_mode 0)
+                        )
+                        (eeprom-store-i torq_mode_add torq_mode)
+                    }{ ; Toggle Safety Switch
+                        (if (= safety_status 0)
+                            (setq vt_throttle_status (if (= vt_throttle_status 1) 0 1))
+                        )
+                    })
                     (setq on_pressed_short 0)
                 })
 
