@@ -81,10 +81,10 @@
         (print "eeprom 13 error, writing default")
         (eeprom-store-i 13 0)
     })
-    (setq test_value (to-i (eeprom-read-i 14)))
+    (setq test_value (to-i (eeprom-read-i 14))) ; Battery Saver
     (if(or (< test_value 0)(> test_value 1)){
         (print "eeprom 14 error, writing default")
-        (eeprom-store-i 14 0)
+        (eeprom-store-i 14 1)
     })
     (setq test_value (to-i (eeprom-read-i 15)))
     (if(or (< test_value 0)(> test_value 1)){
