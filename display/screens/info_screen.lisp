@@ -148,7 +148,7 @@
         (if (= cfg_pressed_short 1){
             (setq cfg_pressed_short 0)
             (setq info_screen_num (+ info_screen_num 1))
-            (if (> info_screen_num 2){
+            (if (> info_screen_num 1){ ; Shortened from 2 to avoid showing obsolete Data-Rate screen
                 (setq info_screen_num 0)
                 (setq iteration_data 0)
                 (setq firts_iteration_info 0)
