@@ -27,7 +27,7 @@
 (def vt_data_send_interval 1)
 (def DATA_SEND_FAST 1)   ; Send Data 1 out of 1 Throttle Loops
 (def DATA_SEND_SLOW 2)   ; Send Data 1 out of 2 Throttle Loops
-(def DATA_SEND_IDLE 5)  ; Send Data 1 out of 5 Throttle Loops
+(def DATA_SEND_IDLE 10)  ; Send Data 1 out of 10 Throttle Loops
 (def DATA_SEND_STANDBY 20)  ; Send Data 1 out of 20 Throttle Loops
 
 (def last_throttle_update 0)
@@ -101,12 +101,14 @@
         (cond ; Set data send interval based on throttle change magnitude
             ((= pairing_status 0)
                 (setq vt_data_send_interval DATA_SEND_STANDBY))
-            ((or(= batt_saver 0)(>= change NOISE_THRESHOLD))
+            ((or (>= change NOISE_THRESHOLD)
+                 (and (= batt_saver 0) (>= change IDLE_THRESHOLD)))
                 (setq vt_data_send_interval DATA_SEND_FAST))
-            ((>= change IDLE_THRESHOLD)
+            ((or (>= change IDLE_THRESHOLD)
+                 (= batt_saver 0))
                 (setq vt_data_send_interval DATA_SEND_SLOW))
             (t
-                (setq vt_data_send_interval DATA_SEND_IDLE))
+                (setq vt_data_send_interval DATA_SEND_IDLE)) ; Idle Rate is only used when Battery Saver is Enabled
         )
 
         ;; Send data at prescribed interval
