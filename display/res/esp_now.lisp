@@ -119,7 +119,7 @@
 })
 
 (defun safe-wifi-stop () {
-    (if (and (= wifi_lock 0) (= waiting_for_response 0) (= menu_index 0)) {
+    (if (and (= wifi_lock 0) (or (= waiting_for_response 0) (= pairing_status 0)) (= menu_index 0)) {
         (wifi-stop)
         (setq vt_wifi_state 0)
     })
@@ -146,8 +146,18 @@
 
      (esp-now-send peer data_send_buffer)
      (setq vt_throttle_final current_throttle)
-    
-     (setq waiting_for_response 1)
+
+     (if (= pairing_status 0) {
+         ; If not paired, schedule a delayed wifi stop
+         (spawn (lambda () {
+             (sleep 0.1)
+             (safe-wifi-stop)
+         }))
+     } {
+         ; If paired, wait for response from receiver
+         (setq waiting_for_response 1)
+     })
+
      (setq wifi_lock 0)  ; Release lock
 
     ;;  ; Not convinced that this helps, disabling for now
