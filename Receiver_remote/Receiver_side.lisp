@@ -50,7 +50,7 @@
 (def rec_fw_may      1)
 (def rec_fw_min      0)
 (def rec_lisp_may    1)
-(def rec_lisp_min    34)
+(def rec_lisp_min    40)
 (def skate_fw_may    0)
 (def skate_fw_min    0)
 (def time            0.0)
@@ -97,7 +97,7 @@
 (def start_time 0)
 (def last_package_received 0.0)
 (to-u64 last_package_received)
-(def remote_timeout 0.3) ; [sec] time out for Remote Data received
+(def remote_timeout 1.0) ; [sec] time out for Remote Data received
 (def remote_timeout_printed 1)
 
 (def is_uart_start     0)
@@ -544,7 +544,7 @@
                 (pwm-stop 0)
             })
         })
-        (sleep 0.05)
+        (sleep 0.02)
        }
      )
   }

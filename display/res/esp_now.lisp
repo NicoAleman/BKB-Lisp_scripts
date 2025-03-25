@@ -43,8 +43,12 @@
 ; For logging in VESC Tool
 (def vt_throttle_data 0.0)
 (def vt_throttle_final 0.0)
+(def vt_wifi_state 0)  ; 1.0 when WiFi is on, 0.0 when off
 
 (def data_send_buffer (bufcreate 11)) ; Create once and reuse
+
+(def wifi_lock 0)  ; Lock for WiFi state changes
+(def waiting_for_response 0)  ; Track if we're waiting for a response
 
 (defun esp_now_init(){
     (esp-now-start)
@@ -95,6 +99,8 @@
         ;(print (list "src:" src  "des:" des "data:" data "rssi:" rssi))
         (data_received data)
         (setq last_peer_packet (systime))
+        (setq waiting_for_response 0)  ; Got our response
+        (safe-wifi-stop)  ; Try to stop WiFi if conditions allow
     })
 })
 
@@ -105,8 +111,24 @@
            (_ nil)
 )))
 
+(defun ensure-wifi-on () {
+    (if (= vt_wifi_state 0) {
+        (wifi-start)
+        (setq vt_wifi_state 1)
+    })
+})
+
+(defun safe-wifi-stop () {
+    (if (and (= wifi_lock 0) (= waiting_for_response 0) (= menu_index 0)) {
+        (wifi-stop)
+        (setq vt_wifi_state 0)
+    })
+})
 
 (defun data_send() {
+     (setq wifi_lock 1)  ; Acquire lock
+     (ensure-wifi-on)
+    
      (var current_throttle throttle)
      (var throttle_to_send throttle)
      (if (= (isCharging) 1)
@@ -124,6 +146,9 @@
 
      (esp-now-send peer data_send_buffer)
      (setq vt_throttle_final current_throttle)
+    
+     (setq waiting_for_response 1)
+     (setq wifi_lock 0)  ; Release lock
 
     ;;  ; Not convinced that this helps, disabling for now
     ;;  (if (= batt_saver 1){

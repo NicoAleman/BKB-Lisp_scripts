@@ -27,7 +27,7 @@
 (def vt_data_send_interval 1)
 (def DATA_SEND_FAST 1)   ; Send Data 1 out of 1 Throttle Loops
 (def DATA_SEND_SLOW 2)   ; Send Data 1 out of 2 Throttle Loops
-(def DATA_SEND_IDLE 10)  ; Send Data 1 out of 10 Throttle Loops
+(def DATA_SEND_IDLE 5)  ; Send Data 1 out of 5 Throttle Loops
 ;; (def DATA_SEND_STANDBY 20)  ; Send Data 1 out of 20 Throttle Loops
 
 (def last_throttle_update 0)
