@@ -1,5 +1,5 @@
 ; includes
-(define lisp_V 1.41)
+(define lisp_V 1.42)
 (define THR_TIMEOUT 2.5) ; 5 for 160Mhz
 (def UNITS 0); 0--> imperial 1--> metric
 
@@ -136,15 +136,15 @@
                 (if (> vt_idle_time 300) {  ; 300 seconds = 5 minutes
                     (off_sequence)
                 }))
-            (progn 
+            (progn
                 (setq is_idle 0)  ; Reset idle tracking if conditions not met
                 (setq vt_idle_time 0)
             )
         )
 
         ;; (setq main_prescaler (+ main_prescaler 1))
-        (cond 
-            ((eq menu_index 0) (progn 
+        (cond
+            ((eq menu_index 0) (progn
                 (draw_main_screen)
 
                 ; Handle direction change on short cfg button press

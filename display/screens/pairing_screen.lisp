@@ -1,7 +1,8 @@
-
 (def exit 1)
 (def firts_iteration_pair 0)
 (def iteration_counter_pair 0)
+(def last_esp_send 0)  ; Track last ESP-NOW send time
+(def last_animation_update 0)  ; Track last animation update
 
 (defun pairing_screen (){
     (if (= firts_iteration_pair 0){
@@ -16,7 +17,8 @@
         (setq signal_level -1000)
         (setq peer (list 255 255 255 255 255 255))
         (esp-now-add-peer peer)
-        (def text_box (img-buffer 'indexed2 127 14))
+        (setq last_esp_send (systime))
+        (setq last_animation_update (systime))
         (setq firts_iteration_pair 1)
      })
 
@@ -48,33 +50,40 @@
         (setq pairing_key_R   0)
         (setq signal_level -1000)
         
-        (img-clear text_box)
-        (txt-block-l text_box 1 0 0 font_9x14 "Searching")
-
-        (setq iteration_counter_pair (+ iteration_counter_pair 1))
-        (if (> iteration_counter_pair 40) (setq iteration_counter_pair 0))
+        ; Only update animation every 100ms instead of every frame
+        (if (> (- (systime) last_animation_update) 100) {
+            (setq iteration_counter_pair (+ iteration_counter_pair 1))
+            (if (> iteration_counter_pair 40) (setq iteration_counter_pair 0))
+            
+            (img-clear text_box)
+            (txt-block-l text_box 1 0 0 font_9x14 "Searching")
+            
+            (cond 
+                ((> iteration_counter_pair 30)
+                    (txt-block-l text_box 1 83 0 font_9x14 "..."))
+                ((> iteration_counter_pair 20)
+                    (txt-block-l text_box 1 83 0 font_9x14 ".."))
+                ((> iteration_counter_pair 10)
+                    (txt-block-l text_box 1 83 0 font_9x14 "."))
+                (t 
+                    (txt-block-l text_box 1 83 0 font_9x14 "   ")))
+            
+            (disp-render text_box (+ x_offset 0) (+ y_offset 17) '(0 0xFFFFFF))
+            (setq last_animation_update (systime))
+        })
         
-        (cond 
-            ((> iteration_counter_pair 30)
-                (txt-block-l text_box 1 83 0 font_9x14 "..."))
-            ((> iteration_counter_pair 20)
-                (txt-block-l text_box 1 83 0 font_9x14 ".."))
-            ((> iteration_counter_pair 10)
-                (txt-block-l text_box 1 83 0 font_9x14 "."))
-            (t 
-                (txt-block-l text_box 1 83 0 font_9x14 "   ")))
-        
-        (disp-render text_box (+ x_offset 0) (+ y_offset 17) '(0 0xFFFFFF))
-        
-        (var pairing_buff (bufcreate 10))
-        (bufset-f32 pairing_buff 0 0.00001); for some reason when the first element of the buffer is 0, the rest is filled with 0
-        (bufset-i8 pairing_buff 6 64)
-        (bufset-i8 pairing_buff 7 ppm_status) ; add ppm and uart status and button_state to avoid missing data information about the communication
-        (bufset-i8 pairing_buff 8 uart_status);
-        (bufset-i8 pairing_buff 9 return_analog);
-        (esp-now-send peer pairing_buff)
-        (free pairing_buff)
-
+        ; Only send ESP-NOW packets every 200ms instead of every frame
+        (if (> (- (systime) last_esp_send) 200) {
+            (var pairing_buff (bufcreate 10))
+            (bufset-f32 pairing_buff 0 0.00001); for some reason when the first element of the buffer is 0, the rest is filled with 0
+            (bufset-i8 pairing_buff 6 64)
+            (bufset-i8 pairing_buff 7 ppm_status) ; add ppm and uart status and button_state to avoid missing data information about the communication
+            (bufset-i8 pairing_buff 8 uart_status);
+            (bufset-i8 pairing_buff 9 return_analog);
+            (esp-now-send peer pairing_buff)
+            (free pairing_buff)
+            (setq last_esp_send (systime))
+        })
      })
 
      (if (= on_pressed_short 1){
