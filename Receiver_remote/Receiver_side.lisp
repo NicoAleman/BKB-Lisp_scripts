@@ -50,7 +50,7 @@
 (def rec_fw_may      1)
 (def rec_fw_min      0)
 (def rec_lisp_may    1)
-(def rec_lisp_min    42)
+(def rec_lisp_min    50)
 (def skate_fw_may    0)
 (def skate_fw_min    0)
 (def time            0.0)
@@ -99,6 +99,13 @@
 (to-u64 last_package_received)
 (def remote_timeout 1.0) ; [sec] time out for Remote Data received
 (def remote_timeout_printed 1)
+
+; Pairing broadcast variables
+(def pairing_broadcast_active 0)
+(def pairing_start_time 0)
+(def pairing_duration 15000) ; 15 seconds in milliseconds
+(def last_pairing_broadcast 0)
+(def pairing_window_active 0) ; Controls whether pairing is allowed at all
 
 (def is_uart_start     0)
 (def is_ppm_start      0)
@@ -163,6 +170,51 @@
     (if (> raw_throttle 0)
         (* raw_throttle scale)  ; Scale positive values
         raw_throttle)           ; Leave negative values unchanged
+})
+
+; Broadcast pairing packets
+(defun broadcast_pairing_packet () {
+    ; Use the shared data buffer to send full format data during pairing
+    ; Fill with default/dummy data but include the pairing key at position 36
+    (bufset-f32 shared_data_buffer 0 0.0)    ; rpm
+    (bufset-f32 shared_data_buffer 4 0.0)    ; voltage
+    (bufset-f32 shared_data_buffer 8 0.0)    ; temp
+    (bufset-f32 shared_data_buffer 12 0.0)    ; current
+    (bufset-i8 shared_data_buffer 16 poles)   ; poles
+    (bufset-f32 shared_data_buffer 17 pulley) ; pulley
+    (bufset-f32 shared_data_buffer 21 wheel_diam) ; wheel diameter
+    (bufset-i8 shared_data_buffer 25 batt_type) ; battery type
+    (bufset-i8 shared_data_buffer 26 rec_fw_may) ; fw version
+    (bufset-i8 shared_data_buffer 27 rec_fw_min)
+    (bufset-i8 shared_data_buffer 28 rec_lisp_may) ; lisp version
+    (bufset-i8 shared_data_buffer 29 rec_lisp_min)
+    (bufset-i8 shared_data_buffer 30 skate_fw_may)
+    (bufset-i8 shared_data_buffer 31 skate_fw_min)
+    (bufset-f32 shared_data_buffer 32 0.0)    ; distance
+    (bufset-i8 shared_data_buffer 36 127)     ; pairing key - THIS IS THE KEY FIELD
+    (bufset-i8 shared_data_buffer 37 pairing_status) ; connection status
+    
+    (esp-now-send broadcast_add shared_data_buffer)
+})
+
+; Handle pairing broadcast timing
+(defun handle_pairing_broadcast () {
+    (if (= pairing_broadcast_active 1) {
+        ; Check if pairing period has expired
+        (if (> (- (systime) pairing_start_time) pairing_duration) {
+            (print "Pairing window closed - no longer accepting pairing requests")
+            (setq pairing_broadcast_active 0)
+            (setq pairing_window_active 0)  ; Close pairing window completely
+        }
+        {
+            ; Send pairing broadcast every 500ms
+            (if (> (- (systime) last_pairing_broadcast) 500) {
+                (print "Broadcasting pairing packet...")
+                (broadcast_pairing_packet)
+                (setq last_pairing_broadcast (systime))
+            })
+        })
+    })
 })
 
 (defun data-received (data) {
@@ -316,49 +368,62 @@
 )
 
 (defun proc-data (src des data rssi) {
-    ;(print (list "src:" src  "des:" des "data:" data "rssi:" rssi))
-
-    (if (eq des broadcast_add) {
-        (print "broadcasting")
-    })
     (setq signal_level rssi)
     (setq pairing_key  (bufget-i8 data 6))
 
-    (if (eq src mac-tx) {
-        ;(print (list "src:" src  "des:" des "data:" data "rssi:" rssi))
-        (setq is_data_received 1.0); to ensure when a data is received the ESP start sending
-        (data-received data)
+    ; Debug logging during pairing window
+    (if (= pairing_window_active 1) {
+        (print (list "Packet received during pairing window: src=" src "key=" pairing_key "mac-tx=" mac-tx))
     })
 
-    (setq cont (+ cont 1))
-
-    (if (= cont 9) {
-        (print "listening")
-     (if (and (= pairing_key 64)(> signal_level -80)) {
-
+    ; Handle pairing response from remote (key 128 = pairing response) - check this FIRST during pairing window
+    ; Note: 128 may appear as -128, possibly due to signed byte interpretation?
+    (if (and (or (= pairing_key 128) (= pairing_key -128)) (= pairing_window_active 1)) {
+        (print "Pairing response received - completing pairing")
+        (print "New remote MAC:" src)
+        
+        ; Store the new remote's MAC to EEPROM
         (eeprom-store-i 0 (ix src 0))
         (eeprom-store-i 1 (ix src 1))
         (eeprom-store-i 2 (ix src 2))
         (eeprom-store-i 3 (ix src 3))
         (eeprom-store-i 4 (ix src 4))
         (eeprom-store-i 5 (ix src 5))
-
-        (eeprom-set-mac)
-        (setq mac-tx (list mac_0 mac_1 mac_2 mac_3 mac_4 mac_5)) ; desired mac for pairing
+        
+        ; Update the runtime variables with the new MAC
+        (setq mac_0 (ix src 0))
+        (setq mac_1 (ix src 1))
+        (setq mac_2 (ix src 2))
+        (setq mac_3 (ix src 3))
+        (setq mac_4 (ix src 4))
+        (setq mac_5 (ix src 5))
+        (setq mac-tx (list mac_0 mac_1 mac_2 mac_3 mac_4 mac_5))
+        
+        ; Add the new remote as a peer
+        (esp-now-add-peer mac-tx)
+        (print "Pairing completed with:")
         (print mac-tx)
+        (setq pairing_broadcast_active 0)
+        (setq pairing_window_active 0)
     }
-
-    { (eeprom-set-mac)    ; load a default mac address when time pairing is finished
-      (setq mac-tx (list mac_0 mac_1 mac_2 mac_3 mac_4 mac_5)) ;
-      (print "use default mac")
-      (print mac-tx)
-      (setq cont 0)
-    }
-   )
-  }
- )
-    ;(print mac-tx)
-    (esp-now-add-peer mac-tx)
+    {
+        ; Handle normal communication from already paired remote
+        (if (eq src mac-tx) {
+            ; This is from our paired remote - process normally
+            (setq is_data_received 1.0)
+            (data-received data)
+            
+            ; If pairing window is active and we get normal communication from paired remote, close pairing window
+            (if (= pairing_window_active 1) {
+                (print "Paired remote connected - closing pairing window")
+                (setq pairing_broadcast_active 0)
+                (setq pairing_window_active 0)
+            })
+        }
+        {
+            ; Silently ignore all other packets (normal operation packets from unknown remotes)
+        })
+    })
  }
 )
 
@@ -371,6 +436,21 @@
 
 (defun main () {
     (print "Self mac" (get-mac-addr))
+    
+    ; TESTING: Wipe paired remote MAC address on boot
+    ;; (print "TESTING: Wiping paired remote MAC address")
+    ;; (eeprom-store-i 0 0)
+    ;; (eeprom-store-i 1 0)
+    ;; (eeprom-store-i 2 0)
+    ;; (eeprom-store-i 3 0)
+    ;; (eeprom-store-i 4 0)
+    ;; (eeprom-store-i 5 0)
+    
+    ; Load paired remote MAC address from EEPROM
+    (eeprom-set-mac)
+    (setq mac-tx (list mac_0 mac_1 mac_2 mac_3 mac_4 mac_5))
+    (print "Paired remote MAC:" mac-tx)
+    
     (setq uart_status_init (to-i(eeprom-read-i 6)))
     (if (= uart_status_init 0) {
         (setq can-id (scan-can-device can-id)) ; when ppm is enabled just use
@@ -380,6 +460,14 @@
     )
     (esp-now-start)
     (esp-now-add-peer broadcast_add)
+    (esp-now-add-peer mac-tx)  ; Add the paired remote as a peer
+
+    ; Start pairing broadcast for 15 seconds from boot up
+    (print "Starting 15-second pairing window...")
+    (setq pairing_broadcast_active 1)
+    (setq pairing_window_active 1)     ; Enable pairing acceptance
+    (setq pairing_start_time (systime))
+    (setq last_pairing_broadcast 0)
 
     (event-register-handler (spawn event-handler))
     (event-enable 'event-esp-now-rx)
@@ -526,6 +614,9 @@
 
 (defun loop-state () {
     (loopwhile-thd 50 t {
+        ; Handle pairing broadcast timing
+        (handle_pairing_broadcast)
+        
         (if (= is_data_received 1.0) {
             (data_to_send shared_data_buffer)
             (set-motor-torque)

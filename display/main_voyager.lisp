@@ -1,5 +1,5 @@
 ; includes
-(define lisp_V 1.42)
+(define lisp_V 1.50)
 (define THR_TIMEOUT 2.5) ; 5 for 160Mhz
 (def UNITS 0); 0--> imperial 1--> metric
 
@@ -90,6 +90,16 @@
 ;init mac and pair
 
 (print "Self mac" (get-mac-addr)) ; self mac address
+
+; TESTING: Wipe paired MAC address on boot
+;; (print "TESTING: Wiping paired MAC address")
+;; (eeprom-store-i pair0_add 0)
+;; (eeprom-store-i pair1_add 0)
+;; (eeprom-store-i pair2_add 0)
+;; (eeprom-store-i pair3_add 0)
+;; (eeprom-store-i pair4_add 0)
+;; (eeprom-store-i pair5_add 0)
+
 (setq mac_0 (to-i (eeprom-read-i pair0_add)))
 (setq mac_1 (to-i (eeprom-read-i pair1_add)))
 (setq mac_2 (to-i (eeprom-read-i pair2_add)))

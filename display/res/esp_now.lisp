@@ -35,6 +35,7 @@
 (def pairing_key_R 0)
 (def signal_level 0)
 (def pair_source '(0 0 0 0 0 0))
+(def pairing_broadcast_received 0)  ; Flag to indicate if pairing_key_R came from a legitimate broadcast
 (def broadcast_add '(255 255 255 255 255 255))
 (def last_peer_packet 0.0)
 (def is_data_received 0)
@@ -93,14 +94,38 @@
 
     (setq pair_source src)
     (setq signal_level rssi)
-    (setq pairing_key_R    (bufget-i8  data 36))
-
-    (if (eq src peer) {
-        ;(print (list "src:" src  "des:" des "data:" data "rssi:" rssi))
+    
+    ; Always try to read pairing key for debugging
+    (var temp_pairing_key (bufget-i8 data 36))
+    
+    ; Check packet types
+    (var is_from_peer (eq src peer))
+    (var is_broadcast (eq des broadcast_add))
+    (var is_pairing_packet (= temp_pairing_key 127))
+    (var is_pairing_mode (and (= menu_index 1) (= pairing_found 0))) ; Only accept pairing if we haven't found one yet
+    
+    ; Handle packets from our configured peer (normal operation)
+    (if is_from_peer {
+        (setq pairing_key_R temp_pairing_key)
         (data_received data)
         (setq last_peer_packet (systime))
         (setq waiting_for_response 0)  ; Got our response
         (safe-wifi-stop)  ; Try to stop WiFi if conditions allow
+    }
+    {
+        ; Handle pairing packets only when in pairing mode AND it's a true broadcast
+        ; (Pairing packets are broadcast to 255,255,255,255,255,255, not sent to specific remote MAC)
+        (if (and is_pairing_mode is_broadcast is_pairing_packet) {
+            (print (list "PAIRING PACKET FOUND from:" src "rssi:" rssi "pairing_key:" temp_pairing_key "broadcast_dest:" des))
+            (setq pairing_key_R temp_pairing_key)
+            (setq pairing_broadcast_received 1)  ; Mark that this came from a legitimate broadcast
+            (data_received data)
+        }
+        {
+            ; Silently ignore all other packets including:
+            ; - Regular data packets (sent to specific MAC, not broadcast)
+            ; - Pairing packets when not in pairing mode
+        })
     })
 })
 
