@@ -234,6 +234,14 @@
         (if (= is_uart_start 0) {
             (setq is_ppm_start 0)
             (pwm-stop 0)
+            ; Initialize CAN device if not already done
+            (if (< can-id 0) {
+                (setq can-id (scan-can-device can-id))
+                (eeprom-store-i 8 can-id)
+                (print "CAN device initialized:" can-id)
+            } {
+                (print "CAN device already initialized:" can-id)
+            })
             (uart-init)
             (print "Uart started")
             (setq is_uart_start 1)
@@ -260,7 +268,8 @@
         ; Convert throttle (-1 to 1) to UART range (0 to 255)
         (setq throttle_uart (+ (* (+ scaled_throttle 1) 127.5) 0.5))
 
-        (uart-send)
+        ;; (uart-send)
+        (can-cmd can-id (str-replace (to-str(list scaled_throttle 0 0 0 0)) "(" "(set-remote-state "))
         (setq no_app_config 0.0)
     })
 
