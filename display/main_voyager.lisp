@@ -1,7 +1,6 @@
 ; includes
 (define lisp_V 1.50)
 (define THR_TIMEOUT 2.5) ; 5 for 160Mhz
-(def UNITS 0); 0--> imperial 1--> metric
 
 (def mac_0 0)
 (def mac_1 0)
@@ -80,6 +79,7 @@
 (def time_since_screen_update 0)
 (def SCREEN_REFRESH_INTERVAL 100) ; 100ms = 10Hz
 
+(def units 0)
 (def direction 1)
 (def menu_index 0)
 (def main_prescaler 0)
@@ -119,6 +119,7 @@
 (setq pulley_config (to-float (eeprom-read-f pulley_add))) ; load default pulley value
 (setq batt_type_config (to-i (eeprom-read-i batt_type_add))) ; load default batt_type
 (setq safety_status (to-i (eeprom-read-i safety_status_add))) ; load the safety status for throttle
+(setq units (to-i (eeprom-read-i units_add))) ; load the units
 
 (esp_now_init)
 

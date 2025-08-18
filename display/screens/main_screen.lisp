@@ -99,14 +99,14 @@
     ;; ;;;;;;;;;; ;;
 
     ;; SPEED ;;
-    (def current_speed (if (= UNITS 1) (speed_cal) (* (speed_cal) 0.621)))
+    (def current_speed (if (= units 1) (speed_cal) (* (speed_cal) 0.621)))
 
     (def current_display_speed (to-i (* current_speed 10)))  ; For comparing displayed values
     (if (or (!= current_display_speed last_displayed_speed)
             (!= speed_color last_speed_color)
             (= first_draw 1))
         (progn
-            (write-speed current_speed UNITS (+ x_offset (if (= UNITS 1) 33 28)) (+ y_offset 19) speed_color)
+            (write-speed current_speed units (+ x_offset (if (= units 1) 33 28)) (+ y_offset 19) speed_color)
             (setq last_displayed_speed current_display_speed)
             (setq last_speed_color speed_color)
         )
@@ -114,13 +114,13 @@
     ;; ;;;;; ;;
 
     ;; TRIP ;;
-    (def current_trip (if (= UNITS 1) distance (* distance 0.621)))
+    (def current_trip (if (= units 1) distance (* distance 0.621)))
 
     (def current_display_trip (to-i (* current_trip 10)))  ; For comparing displayed values
     (if (or (!= current_display_trip last_displayed_trip)
             (= first_draw 1))
         (progn
-            (write_trip current_trip UNITS (+ x_offset 63) (+ y_offset 50))
+            (write_trip current_trip units (+ x_offset 63) (+ y_offset 50))
             (setq last_displayed_trip current_display_trip)
         )
     )

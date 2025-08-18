@@ -19,6 +19,7 @@
 (define pulley_add      18)
 (define batt_type_add   19)
 (define safety_status_add 20)
+(define units_add 21)
 
 ; Default values
 (define default_min_cal 100) ; Default based on typical production remotes
@@ -37,6 +38,7 @@
 (define default_s_count 18)
 (define default_safety_switch 0)
 (define init_flag 0xFFFE) ; Switched to 0xFFFE for v1.50 release to load new defaults
+(define default_units 0) ; Default to Imperial (0 = Imperial, 1 = Metric)
 
 (defun eeprom_check(){
     (setq test_value (to-i (eeprom-read-i 1))) ; Calibration (Min)
@@ -134,12 +136,17 @@
         (print "eeprom 20 error (safety status), writing default: 0")
         (eeprom-store-i 20 default_safety_switch)
     })
+    (setq test_value (to-i (eeprom-read-i 21))) ; Units
+    (if(or (< test_value 0)(> test_value 1)){
+        (print "eeprom 21 error, writing default")
+        (eeprom-store-i 21 default_units)
+    })
 })
 
 (defun eeprom_init(){
 
     (setq test_value (to-i (eeprom-read-i 32)))
-    
+
     ; MEMORY NOT INITIALIZED
     (if(< test_value init_flag){
             (print "Memory not initialized, writing default values")
@@ -163,7 +170,7 @@
             (eeprom-store-f 18 default_gear_ratio) ; Gear Ratio
             (eeprom-store-i 19 default_s_count) ; S-Count
             (eeprom-store-i 20 default_safety_switch) ; Safety Switch
-            (eeprom-store-i 21 0)
+            (eeprom-store-i 21 default_units) ; Units
             (eeprom-store-i 22 0)
             (eeprom-store-i 23 0)
             (eeprom-store-i 24 0)
@@ -192,7 +199,7 @@
             (eeprom-store-f 18 default_gear_ratio) ; Gear Ratio
             (eeprom-store-i 19 default_s_count) ; S-Count
             (eeprom-store-i 20 default_safety_switch) ; Safety Switch
-            (eeprom-store-i 21 0)
+            (eeprom-store-i 21 default_units) ; Units
             (eeprom-store-i 22 0)
             (eeprom-store-i 23 0)
             (eeprom-store-i 24 0)
