@@ -109,6 +109,7 @@
 
 (def is_uart_start     0)
 (def is_ppm_start      0)
+(def is_can_start      0)
 (def currenT_val 0.0)
 ;TODO: List all can devices and check if the listed ID's belong to an ESC controller.
 ;it can be done through FW version, HW or so.
@@ -230,24 +231,18 @@
 
     (setq scaled_throttle (scale_throttle throttle throttle_scale))
 
+    ;; - UART Mode -
     (if (eq uart_status 1) {
         (if (= is_uart_start 0) {
             (setq is_ppm_start 0)
+            (setq is_can_start 0)
             (pwm-stop 0)
-            ; Initialize CAN device if not already done
-            (if (< can-id 0) {
-                (setq can-id (scan-can-device can-id))
-                (eeprom-store-i 8 can-id)
-                (print "CAN device initialized:" can-id)
-            } {
-                (print "CAN device already initialized:" can-id)
-            })
             (uart-init)
             (print "Uart started")
             (setq is_uart_start 1)
             (eeprom-store-i 6 uart_status) ; store uart status to be used when the receiver starts
             (setq uart_status_init (to-i(eeprom-read-i 6)))
-         })
+        })
         ;; (if (< throttle 0.02) {
         ;;     (setq COMM_SET_CURRENT_ID 7) ; current brake
         ;;     (setq current_val 10000) ; this current brake is set to 10A, (configurable by menu?)
@@ -268,25 +263,67 @@
         ; Convert throttle (-1 to 1) to UART range (0 to 255)
         (setq throttle_uart (+ (* (+ scaled_throttle 1) 127.5) 0.5))
 
-        ;; (uart-send)
-        (can-cmd can-id (str-replace (to-str(list scaled_throttle 0 0 0 0)) "(" "(set-remote-state "))
+        (uart-send)
         (setq no_app_config 0.0)
-    })
-
+    }{
+    
+    ;; - PPM Mode -
     (if (eq ppm_status 1) {
         (if (= is_ppm_start 0) {
             (uart-stop)
             (setq is_uart_start 0)
+            (setq is_can_start 0)
             (ppm-start 50 throttle_ppm 0 21 13)
             (print "PPM Started")
             (setq is_ppm_start 1)
             (eeprom-store-i 7 ppm_status)
-         })
+        })
         (setq throttle_ppm (utils_map scaled_throttle -1.0 1.0 0.0 1.0))
         (utils_truncate throttle_ppm 0.1 0.97) ; truncate the values for the throttle ppm
 
         (pwm-set-duty throttle_ppm 0);
         (setq no_app_config 0.0)
+    }{
+
+    ;; - CAN Mode -
+    (if (= is_can_start 0) {
+        (uart-stop)
+        (pwm-stop 0)
+        (setq is_uart_start 0)
+        (setq is_ppm_start 0)
+
+        ; Initialize CAN device if not already done
+        (if (< can-id 0) {
+            (setq can-id (scan-can-device can-id))
+            (eeprom-store-i 8 can-id)
+            (print "CAN device initialized:" can-id)
+        } {
+            (print "CAN device already initialized:" can-id)
+        })
+        
+        (uart-init)
+
+        (print "CAN Started")
+        (setq is_can_start 1)
+
+        (eeprom-store-i 6 uart_status) ; store uart status to be used when the receiver starts
+        (setq uart_status_init (to-i(eeprom-read-i 6)))
+    })
+
+    ; Clamp scaled_throttle between -1 and 1 before UART conversion
+    (if (> scaled_throttle 1.0)
+        (setq scaled_throttle 1.0)
+        (if (< scaled_throttle -1.0)
+            (setq scaled_throttle -1.0)
+        )
+    )
+    ; Convert throttle (-1 to 1) to UART range (0 to 255)
+    (setq throttle_uart (+ (* (+ scaled_throttle 1) 127.5) 0.5))
+
+    (can-cmd can-id (str-replace (to-str(list scaled_throttle 0 0 0 0)) "(" "(set-remote-state "))
+    (setq no_app_config 0.0)
+
+    })
     })
 
     ;; Disable Dangerous CAN functionality for Onewheels (set current is very dangerous)
@@ -331,50 +368,46 @@
 
 (defun data_to_send (data_send) {
 
-  (if (= uart_status 0) {
-      ;(print "No uart enable")
-      (setq rpm     (canget-rpm can-id))
-      (setq vin     (canget-vin can-id))
-      (setq temp    (canget-temp-fet can-id))
-      (setq speed   (canget-speed can-id))
-      (setq I_motor (canget-current can-id))
+    (if (= uart_status 0) {
+        ;(print "No uart enable")
+        (setq rpm     (canget-rpm can-id))
+        (setq vin     (canget-vin can-id))
+        (setq temp    (canget-temp-fet can-id))
+        (setq speed   (canget-speed can-id))
+        (setq I_motor (canget-current can-id))
 
-      (bufset-f32 data_send 0 (+ rpm 0.01)); from CAN
-      (bufset-f32 data_send 4  vin); from CAN
-      (bufset-f32 data_send 12 I_motor) ; from CAN
-      (bufset-f32 data_send 32 distance); from CAN
-    ;;   (print distance)
-     }
-     {
-      (bufset-f32 data_send 0  (to-float erpm_l));erpm from UART
-      (bufset-f32 data_send 4  (/ (to-float voltage) 10.0)); from UART
-      (bufset-f32 data_send 12 (/ (to-float current) 100)); from UART
-      (bufset-f32 data_send 32  (to-float distance-uart)); from UART
-      ;(bufset-f32 data_send 32 (/ (to-float (* odometer 0.000621371)) 1)); from UART
-     }
+        (bufset-f32 data_send 0 (+ rpm 0.01)); from CAN
+        (bufset-f32 data_send 4  vin); from CAN
+        (bufset-f32 data_send 12 I_motor) ; from CAN
+        (bufset-f32 data_send 32 distance); from CAN
+        ;;   (print distance)
+    }
+    {
+        (bufset-f32 data_send 0  (to-float erpm_l));erpm from UART
+        (bufset-f32 data_send 4  (/ (to-float voltage) 10.0)); from UART
+        (bufset-f32 data_send 12 (/ (to-float current) 100)); from UART
+        (bufset-f32 data_send 32  (to-float distance-uart)); from UART
+        ;(bufset-f32 data_send 32 (/ (to-float (* odometer 0.000621371)) 1)); from UART
+    })
 
-     )
-
-      (bufset-f32 data_send 8  temp)
-      (bufset-i8  data_send 16 poles)
-      (bufset-f32 data_send 17 pulley)
-      (bufset-f32 data_send 21 wheel_diam)
-      (bufset-i8  data_send 25 batt_type)
-      (bufset-i8  data_send 26 rec_fw_may)
-      (bufset-i8  data_send 27 rec_fw_min )
-      (bufset-i8  data_send 28 rec_lisp_may)
-      (bufset-i8  data_send 29 rec_lisp_min)
-      (bufset-i8  data_send 30 skate_fw_may)
-      (bufset-i8  data_send 31 skate_fw_min)
-      (bufset-i8  data_send 36 127); sends 127 as pairing key
-      (bufset-i8  data_send 37 pairing_status) ; send connection status
+    (bufset-f32 data_send 8  temp)
+    (bufset-i8  data_send 16 poles)
+    (bufset-f32 data_send 17 pulley)
+    (bufset-f32 data_send 21 wheel_diam)
+    (bufset-i8  data_send 25 batt_type)
+    (bufset-i8  data_send 26 rec_fw_may)
+    (bufset-i8  data_send 27 rec_fw_min )
+    (bufset-i8  data_send 28 rec_lisp_may)
+    (bufset-i8  data_send 29 rec_lisp_min)
+    (bufset-i8  data_send 30 skate_fw_may)
+    (bufset-i8  data_send 31 skate_fw_min)
+    (bufset-i8  data_send 36 127); sends 127 as pairing key
+    (bufset-i8  data_send 37 pairing_status) ; send connection status
 
     (if (= pairing_key 64) { ;64
-      (esp-now-send mac-tx data_send)
-     }
-    )
-  }
-)
+        (esp-now-send mac-tx data_send)
+    })
+})
 
 (defun proc-data (src des data rssi) {
     (setq signal_level rssi)

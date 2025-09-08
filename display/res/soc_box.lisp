@@ -67,14 +67,14 @@
     (if (= rem_sk 1)
         (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n (to-i display_soc) "%d%%"))
         (progn
-            (if (= rem_sk 1)
-                (progn
-                    (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n (to-i (* display_soc 100)) "%03dV"))
-                    (txt-block-c bat_box 14 12 8 font_9x14  ".")
-                )
+            (if (< display_soc 100)
                 (progn
                     (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n (to-i (* display_soc 10)) "%03dV"))
                     (txt-block-c bat_box 14 20 8 font_9x14  ".")
+                )
+                (progn
+                    (txt-block-c bat_box 14 20 8 font_9x14 (str-from-n (to-i (* display_soc 10)) "%03d"))
+                    (txt-block-c bat_box 14 29 8 font_9x14  ".")
                 )
             )
         )

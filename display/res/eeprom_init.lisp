@@ -28,9 +28,9 @@
 (define default_total_trip 0.0)
 (define default_pair_mac 0) ; Default to 0 (no pairing)
 (define default_data_rate 0.06)
-(define default_ppm_status 0) ; Default OFF (Assume UART by default)
+(define default_ppm_status 0) ; Default OFF (Assume CAN by default)
 (define default_batt_saver 1) ; Default ON
-(define default_uart_status 1) ; Default ON
+(define default_uart_status 0) ; Default OFF (Assume CAN by default)
 (define default_motor_poles 30) ; 30 Poles
 (define default_wheel_diam 0.280) ; 280mm
 (define default_gear_ratio 1.0) ; 1:1
