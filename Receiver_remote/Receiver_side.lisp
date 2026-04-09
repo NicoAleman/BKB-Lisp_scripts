@@ -99,6 +99,7 @@
 (to-u64 last_package_received)
 (def remote_timeout 1.0) ; [sec] time out for Remote Data received
 (def remote_timeout_printed 1)
+(def static_config_initialized 0)
 
 ; Pairing broadcast variables
 (def pairing_broadcast_active 0)
@@ -154,6 +155,32 @@
     (can-cmd can-id "(conf-set 'can-status-msgs-r1 0x3F )") ; set the CAN msg status that will be shown in the remote.
 
     (return can-id)
+})
+
+(defun can-active () {
+    (= uart_status 0)
+})
+
+(defun ensure-can-ready () {
+    (if (and (can-active) (< can-id 0)) {
+        (setq can-id (scan-can-device can-id))
+        (if (>= can-id 0) {
+            (eeprom-store-i 8 can-id)
+            (print "Can device:" can-id)
+        })
+    })
+})
+
+(defun init-static-config () {
+    ; Keep the receiver-side fixed config local. These values are already
+    ; fixed on the remote and do not need continuous CAN refreshes.
+    (if (= static_config_initialized 0) {
+        (setq poles 14.0)
+        (setq pulley 2.66)
+        (setq wheel_diam 0.105)
+        (setq batt_type 3.0)
+        (setq static_config_initialized 1)
+    })
 })
 
 ;; (defun ppm_scale_range (ppm_scale) {
@@ -237,6 +264,7 @@
             (uart-init)
             (print "Uart started")
             (setq is_uart_start 1)
+            (setq can_enabled 0)
             (eeprom-store-i 6 uart_status) ; store uart status to be used when the receiver starts
             (setq uart_status_init (to-i(eeprom-read-i 6)))
          })
@@ -323,18 +351,20 @@
 (defun data_to_send (data_send) {
 
   (if (= uart_status 0) {
-      ;(print "No uart enable")
-      (setq rpm     (canget-rpm can-id))
-      (setq vin     (canget-vin can-id))
-      (setq temp    (canget-temp-fet can-id))
-      (setq speed   (canget-speed can-id))
-      (setq I_motor (canget-current can-id))
+      (ensure-can-ready)
+      (if (>= can-id 0) {
+          ;(print "No uart enable")
+          (setq rpm     (canget-rpm can-id))
+          (setq vin     (canget-vin can-id))
+          (setq temp    (canget-temp-fet can-id))
+          (setq speed   (canget-speed can-id))
+          (setq I_motor (canget-current can-id))
 
-      (bufset-f32 data_send 0 (+ rpm 0.01)); from CAN
-      (bufset-f32 data_send 4  vin); from CAN
-      (bufset-f32 data_send 12 I_motor) ; from CAN
-      (bufset-f32 data_send 32 distance); from CAN
-    ;;   (print distance)
+          (bufset-f32 data_send 0 (+ rpm 0.01)); from CAN
+          (bufset-f32 data_send 4  vin); from CAN
+          (bufset-f32 data_send 12 I_motor) ; from CAN
+          (bufset-f32 data_send 32 distance); from CAN
+      })
      }
      {
       (bufset-f32 data_send 0  (to-float erpm_l));erpm from UART
@@ -436,6 +466,7 @@
 
 (defun main () {
     (print "Self mac" (get-mac-addr))
+    (init-static-config)
     
     ; TESTING: Wipe paired remote MAC address on boot
     ;; (print "TESTING: Wiping paired remote MAC address")
@@ -453,9 +484,7 @@
     
     (setq uart_status_init (to-i(eeprom-read-i 6)))
     (if (= uart_status_init 0) {
-        (setq can-id (scan-can-device can-id)) ; when ppm is enabled just use
-        (eeprom-store-i 8 can-id)
-        (print "Can device:" can-id)
+        (ensure-can-ready) ; only initialize CAN when booting in CAN mode
         (print "Listening...")}
     )
     (esp-now-start)
@@ -480,58 +509,32 @@
 ; all motor info or esc info could be added in this thread
 (defun param-motor () {
     (loopwhile-thd 60 t {
-
-    (if (>= FW_VERSION 6.05) {
-        (if (not-eq distance timeout) {
-            (setq distance (rcode-run can-id 0.1 '(get-dist-abs)))
-        })
-        (if (eq distance timeout) {
-            (print "dist:")(print distance)(setq distance aux)
+        (if (= uart_status 1) {
+            ; UART mode is authoritative for runtime telemetry. Keep the
+            ; static config cached locally and avoid background CAN traffic.
+            (setq distance (to-float distance-uart))
         }
         {
-            (setq aux distance)
+            (ensure-can-ready)
+            (if (>= can-id 0) {
+                (if (>= FW_VERSION 6.05) {
+                    (setq aux (rcode-run can-id 0.1 '(get-dist-abs)))
+                    (if (not-eq aux timeout) {
+                        (setq distance aux)
+                    }
+                    {
+                        (print "dist:")
+                        (print aux)
+                    })
+                }
+                {
+                    (setq distance (canget-dist can-id)) ; for version 6.00 is not absolute
+                })
+            })
         })
-    }
-    {
-        (setq distance (canget-dist can-id)) ; for version 6.00 is not absolute
-    })
-   (if (>= FW_VERSION 6.05) {
-      (if (not-eq poles timeout) {
-            (setq poles (rcode-run can-id 0.1 '(conf-get 'si-motor-poles)))
-               })
-            (if (eq poles timeout) {(print "poles:")(print poles)(setq poles aux_1)
-               }
-            {(setq aux_1 poles)}
-            )
-
-    (if (not-eq pulley timeout) {
-            (setq pulley (rcode-run can-id 0.1 '(conf-get 'si-gear-ratio)))
-               })
-            (if (eq pulley timeout) {(print "pulley:")(print pulley)(setq pulley aux_1)
-               }
-            {(setq aux_1 pulley)}
-            )
-
-    (if (not-eq wheel_diam timeout) {
-            (setq wheel_diam (rcode-run can-id 0.1 '(conf-get 'si-wheel-diameter)))
-               })
-            (if (eq wheel_diam timeout) {(print "wheel_diam:")(print wheel_diam)(setq wheel_diam aux_1)
-               }
-            {(setq aux_1 wheel_diam)}
-            )
-
-    (if (not-eq batt_type timeout) {
-            (setq batt_type (rcode-run can-id 0.1 '(conf-get 'si-battery-cells)))
-               })
-            (if (eq batt_type timeout) {(print "batt_type:")(print batt_type)(setq batt_type aux_1)
-               }
-            {(setq aux_1 batt_type)}
-            )
-         }
-       )
-     (sleep 1.0)
-    }
-   )
+      (sleep 1.0)
+     }
+    )
   }
  )
 
